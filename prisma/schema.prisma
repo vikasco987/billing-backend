@@ -1,0 +1,48 @@
+// This is your Prisma schema file
+// For MongoDB billing software (like Pet Pooja style)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ===================== MODELS =====================
+
+// Users of the system (staff, shop owners, etc.)
+model User {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  name  String
+  email String @unique
+  bills Bill[]
+}
+
+model Product {
+  id    String        @id @default(auto()) @map("_id") @db.ObjectId
+  name  String
+  price Float
+  bills BillProduct[] // 👈 opposite side of relation
+}
+
+model Bill {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String        @db.ObjectId
+  user      User          @relation(fields: [userId], references: [id])
+  products  BillProduct[]
+  total     Float
+  createdAt DateTime      @default(now())
+}
+
+model BillProduct {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  billId    String @db.ObjectId
+  productId String @db.ObjectId
+
+  bill    Bill    @relation(fields: [billId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  quantity Int
+}
