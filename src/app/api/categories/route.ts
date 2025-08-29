@@ -1,6 +1,7 @@
 // src/app/api/categories/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "../../../../lib/prisma";
+import { prisma } from "@/lib/prisma";
+
 
 // GET all categories
 export async function GET() {

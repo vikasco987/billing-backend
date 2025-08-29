@@ -1,6 +1,4 @@
-// This is your Prisma schema file
-// For MongoDB billing software (like Pet Pooja style)
-
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,7 +10,6 @@ datasource db {
 
 // ===================== MODELS =====================
 
-// Users of the system (staff, shop owners, etc.)
 model User {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
   name  String
@@ -47,18 +44,19 @@ model BillProduct {
   quantity Int
 }
 
-
+// ✅ Fixed self relation for Category
 model Category {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
   name      String
-  parentId  String?  @db.ObjectId
-  parent    Category? @relation("Subcategories", fields: [parentId], references: [id])
+  parentId  String?   @db.ObjectId
+  parent    Category? @relation("Subcategories", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   children  Category[] @relation("Subcategories")
   items     Item[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+// ✅ Fixed relation with NoAction
 model Item {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
@@ -69,7 +67,8 @@ model Item {
   stock       Int?     // optional for shops
   variants    Json?    // small/large, toppings etc.
   categoryId  String   @db.ObjectId
-  category    Category @relation(fields: [categoryId], references: [id])
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  image       String?  // Cloudinary image URL
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
