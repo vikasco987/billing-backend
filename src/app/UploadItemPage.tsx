@@ -8,6 +8,10 @@ export default function UploadItemPage() {
   const [loading, setLoading] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
 
+
+
+
+
   const toggleSection = (section: string) => {
     setOpenSection(openSection === section ? null : section);
   };
