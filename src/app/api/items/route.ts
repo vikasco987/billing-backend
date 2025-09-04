@@ -1,83 +1,231 @@
-// // src/app/api/items/route.ts
-// import { NextRequest, NextResponse } from "next/server";
-// import { prisma } from "../:/lib/prisma";
+// import { NextResponse } from "next/server";
 // import { v2 as cloudinary } from "cloudinary";
+// import prisma from "../../..//utils/prismaClient";
 
-// // ✅ Cloudinary config (you can also move this to lib/cloudinary.ts)
+// // Configure Cloudinary with environment variables
 // cloudinary.config({
 //   cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
 //   api_key: process.env.CLOUDINARY_API_KEY!,
 //   api_secret: process.env.CLOUDINARY_API_SECRET!,
 // });
 
-// // ✅ GET all items
-// export async function GET() {
+// export async function POST(req: Request) {
 //   try {
-//     const items = await prisma.item.findMany({
-//       include: { category: true },
-//     });
-//     return NextResponse.json(items);
-//   } catch (error) {
-//     console.error("GET /api/items error:", error);
-//     return NextResponse.json({ error: "Failed to fetch items" }, { status: 500 });
-//   }
-// }
-
-// // ✅ POST create item (with image upload to Cloudinary)
-// export async function POST(req: NextRequest) {
-//   try {
-//     // Parse multipart form-data instead of JSON
 //     const formData = await req.formData();
 
+//     // Extract form fields
 //     const name = formData.get("name") as string;
-//     const description = formData.get("description") as string;
-//     const price = parseFloat(formData.get("price") as string);
-//     const tax = formData.get("tax") ? parseFloat(formData.get("tax") as string) : null;
-//     const discount = formData.get("discount") ? parseFloat(formData.get("discount") as string) : null;
-//     const stock = formData.get("stock") ? parseInt(formData.get("stock") as string) : 0;
-//     const variants = formData.get("variants") as string | null;
+//     const description = (formData.get("description") as string) || null;
+//     const price = formData.get("price") as string;
+//     const tax = formData.get("tax") as string | null;
+//     const discount = formData.get("discount") as string | null;
+//     const stock = formData.get("stock") as string | null;
 //     const categoryId = formData.get("categoryId") as string;
+//     const imageFile = formData.get("image") as File | null;
 
-//     // ✅ Image upload to Cloudinary
-//     let imageUrl: string | null = null;
-//     const file = formData.get("image") as File | null;
-//     if (file) {
-//       const bytes = await file.arrayBuffer();
-//       const buffer = Buffer.from(bytes);
+//     // ✅ Validate required fields
+//     if (!name || !price || !categoryId) {
+//       return NextResponse.json(
+//         { message: "Missing required fields" },
+//         { status: 400 }
+//       );
+//     }
 
-//       const uploadResult = await new Promise<any>((resolve, reject) => {
+//     let image: string | null = null;
+
+//     // ✅ Upload image to Cloudinary if provided
+//     if (imageFile) {
+//       const arrayBuffer = await imageFile.arrayBuffer();
+//       const buffer = Buffer.from(arrayBuffer);
+
+//       const result: any = await new Promise((resolve, reject) => {
 //         cloudinary.uploader
-//           .upload_stream({ folder: "items" }, (err, result) => {
-//             if (err) reject(err);
+//           .upload_stream({ folder: "ecom_items" }, (error, result) => {
+//             if (error) reject(error);
 //             else resolve(result);
 //           })
 //           .end(buffer);
 //       });
 
-//       imageUrl = uploadResult.secure_url;
+//       image = result.secure_url;
 //     }
 
-//     // ✅ Save to MongoDB (Prisma)
-//     const item = await prisma.item.create({
+//     // ✅ Save item into MongoDB using Prisma
+//     const newItem = await prisma.item.create({
 //       data: {
 //         name,
 //         description,
-//         price,
-//         tax,
-//         discount,
-//         stock,
-//         variants,
+//         price: parseFloat(price),
+//         tax: tax ? parseFloat(tax) : null,
+//         discount: discount ? parseFloat(discount) : null,
+//         stock: stock ? parseInt(stock) : null,
 //         categoryId,
-//         image: imageUrl, // ⚡ make sure your Prisma schema has this field
+//         image, // ✅ matches schema field
 //       },
 //     });
 
-//     return NextResponse.json(item);
+//     return NextResponse.json(
+//       { message: "Item created successfully", item: newItem },
+//       { status: 201 }
+//     );
 //   } catch (error) {
-//     console.error("POST /api/items error:", error);
-//     return NextResponse.json({ error: "Failed to create item" }, { status: 500 });
+//     console.error("Error creating item:", error);
+//     return NextResponse.json(
+//       { message: "Internal server error" },
+//       { status: 500 }
+//     );
 //   }
 // }
+
+
+
+
+
+
+
+
+
+
+
+
+// import { NextResponse } from "next/server";
+// import prisma from "@/utils/prismaClient";
+
+// export async function POST(req: Request) {
+//   try {
+//     const data = await req.json();
+//     console.log("📦 Incoming item data:", data); // 👈 debug log
+
+//     const {
+//       name,
+//       description,
+//       price,
+//       tax,
+//       discount,
+//       stock,
+//       categoryId,
+//       image,
+//     } = data;
+
+//     if (!name || !price || !categoryId) {
+//       return NextResponse.json(
+//         { message: "Missing required fields", received: { name, price, categoryId } },
+//         { status: 400 }
+//       );
+//     }
+
+//     const newItem = await prisma.item.create({
+//       data: {
+//         name,
+//         description: description || null,
+//         price: parseFloat(price),
+//         tax: tax ? parseFloat(tax) : null,
+//         discount: discount ? parseFloat(discount) : null,
+//         stock: stock ? parseInt(stock) : null,
+//         categoryId,
+//         image: image || null,
+//       },
+//     });
+
+//     return NextResponse.json(
+//       { message: "Item created successfully", item: newItem },
+//       { status: 201 }
+//     );
+//   } catch (error) {
+//     console.error("❌ Error creating item:", error);
+//     return NextResponse.json(
+//       { message: "Internal server error" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import { NextResponse } from "next/server";
+// import prisma from "@/utils/prismaClient";
+
+// export async function POST(req: Request) {
+//   try {
+//     const body = await req.json();
+//     console.log("📦 Incoming item payload:", body);
+
+//     const {
+//       name,
+//       price,
+//       description,
+//       tax,
+//       discount,
+//       stock,
+//       categoryId,
+//       imageUrl,   // 👈 this is mapped to `image` in DB
+//       variants,
+//     } = body;
+
+//     // ✅ Validate required fields
+//     if (!name || !price || !categoryId) {
+//       console.warn("⚠️ Missing required fields:", { name, price, categoryId });
+//       return NextResponse.json(
+//         {
+//           message: "Missing required fields: name, price, categoryId",
+//           received: { name, price, categoryId },
+//         },
+//         { status: 400 }
+//       );
+//     }
+
+//     // ✅ Parse numeric fields safely
+//     const parsedPrice = parseFloat(price);
+//     if (isNaN(parsedPrice)) {
+//       return NextResponse.json(
+//         { message: "Invalid price value" },
+//         { status: 400 }
+//       );
+//     }
+
+//     const newItem = await prisma.item.create({
+//       data: {
+//         name,
+//         description: description || null,
+//         price: parsedPrice,
+//         tax: tax ? parseFloat(tax) : null,
+//         discount: discount ? parseFloat(discount) : null,
+//         stock: stock ? parseInt(stock) : null,
+//         categoryId,
+//         imageUrl: imageUrl || null, // ✅ correct field name
+//         variants: variants || null,
+//       },
+//     });
+
+//     console.log("✅ Item created:", newItem);
+
+//     return NextResponse.json(
+//       { message: "Item created successfully", item: newItem },
+//       { status: 201 }
+//     );
+//   } catch (error: any) {
+//     console.error("❌ Error creating item:", error.message, error.stack);
+//     return NextResponse.json(
+//       { message: "Internal server error", error: error.message },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+
+
+
 
 
 
@@ -91,72 +239,66 @@
 
 
 import { NextResponse } from "next/server";
-import { v2 as cloudinary } from "cloudinary";
-import prisma from "@/utils/prismaClient";
-
-// Configure Cloudinary with environment variables
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import prisma from "@/lib/prisma";
+import cloudinary from "@/lib/cloudinary";
+import Busboy from "busboy";
 
 export async function POST(req: Request) {
-  try {
-    const formData = await req.formData();
-    
-    // Extract form fields
-    const name = formData.get("name") as string;
-    const description = formData.get("description") as string | null;
-    const price = formData.get("price") as string;
-    const tax = formData.get("tax") as string | null;
-    const discount = formData.get("discount") as string | null;
-    const stock = formData.get("stock") as string | null;
-    const categoryId = formData.get("categoryId") as string;
-    const imageFile = formData.get("image") as File | null;
-    
-    // Validate required fields
-    if (!name || !price || !categoryId) {
-      return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
-    }
+  return new Promise((resolve, reject) => {
+    const busboy = Busboy({ headers: req.headers });
+    const fields: any = {};
+    let fileUploadPromise: Promise<any> | null = null;
 
-    let imageUrl = null;
-
-    // Upload image to Cloudinary if it exists
-    if (imageFile) {
-      const arrayBuffer = await imageFile.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      const result = await new Promise((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream({ folder: "ecom_items" }, (error, result) => {
-            if (error) {
-              reject(error);
-            }
-            resolve(result);
-          })
-          .end(buffer);
+    // Handle file upload
+    busboy.on("file", (name, file, info) => {
+      // upload stream to cloudinary
+      fileUploadPromise = new Promise((res, rej) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: "items" },
+          (error, result) => {
+            if (error) return rej(error);
+            res(result);
+          }
+        );
+        file.pipe(uploadStream);
       });
-      imageUrl = (result as { secure_url: string }).secure_url;
-    }
-
-    // Save the item data in the database
-    const newItem = await prisma.item.create({
-      data: {
-        name,
-        description,
-        price: parseFloat(price),
-        tax: tax ? parseFloat(tax) : 0,
-        discount: discount ? parseFloat(discount) : 0,
-        stock: stock ? parseInt(stock) : 0,
-        categoryId,
-        imageUrl,
-      },
     });
 
-    return NextResponse.json({ message: "Item created successfully", item: newItem }, { status: 201 });
-  } catch (error) {
-    console.error("Error creating item:", error);
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
-  }
+    // Handle text fields
+    busboy.on("field", (name, value) => {
+      fields[name] = value;
+    });
+
+    // After everything finishes
+    busboy.on("finish", async () => {
+      try {
+        let imageUrl: string | null = null;
+
+        // Wait for file upload
+        if (fileUploadPromise) {
+          const uploaded: any = await fileUploadPromise;
+          imageUrl = uploaded.secure_url;
+        }
+
+        // Save item to Prisma DB
+        const item = await prisma.item.create({
+          data: {
+            name: fields.name,
+            description: fields.description || null,
+            price: parseFloat(fields.price),
+            categoryId: fields.categoryId,
+            imageUrl, // ✅ saved Cloudinary link
+          },
+        });
+
+        resolve(NextResponse.json(item, { status: 201 }));
+      } catch (err: any) {
+        reject(NextResponse.json({ error: err.message }, { status: 500 }));
+      }
+    });
+
+    // Pipe request body to busboy
+     // @ts-ignore – because Next.js Request.body is ReadableStream, not Node stream
+    req.body?.pipe(busboy);
+  });
 }
