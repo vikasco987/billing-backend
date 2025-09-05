@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",
+    "bson": "^6.10.4",
     "busboy": "^1.6.0",
     "cloudinary": "^2.7.0",
     "framer-motion": "^12.23.12",
