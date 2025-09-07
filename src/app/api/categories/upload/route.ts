@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import cloudinary from "../../../../../lib/cloudinary";
-import { prisma } from "@/lib/prisma"; // if using Prisma
+import cloudinary from "@/lib/cloudinary"; // use alias
+import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +12,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    // Convert file to Buffer
+    // 🔎 Debug Cloudinary env vars
+    console.log("✅ Cloudinary config", {
+      CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+      CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY ? "Loaded" : "❌ Missing",
+      CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ? "Loaded" : "❌ Missing",
+    });
+
+    // Convert file → Buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
@@ -26,7 +33,7 @@ export async function POST(req: NextRequest) {
         .end(buffer);
     });
 
-    // Save to MongoDB
+    // Save to DB
     const saved = await prisma.upload.create({
       data: {
         text,
@@ -36,6 +43,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(saved, { status: 200 });
   } catch (err: any) {
+    console.error("❌ Upload API error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
