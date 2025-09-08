@@ -1859,6 +1859,188 @@
 
 
 
+// import { NextResponse } from "next/server";
+// import prisma from "@/lib/prisma";
+// import cloudinary from "@/lib/cloudinary";
+// import Busboy from "busboy";
+// import { Readable } from "stream";
+
+// // Helper: convert Web ReadableStream → Node Readable
+// function toNodeReadable(stream: ReadableStream<Uint8Array> | null): Readable {
+//   if (!stream) throw new Error("Request body is empty");
+//   const reader = stream.getReader();
+//   return new Readable({
+//     async read() {
+//       const { done, value } = await reader.read();
+//       if (done) this.push(null);
+//       else this.push(Buffer.from(value));
+//     },
+//   });
+// }
+
+// export async function POST(req: Request) {
+//   const contentType = req.headers.get("content-type") || "";
+
+//   // ===== Case 1: JSON request =====
+//   if (contentType.includes("application/json")) {
+//     try {
+//       const data = await req.json();
+//       console.log("Received JSON data:", data);
+
+//       if (!data.name || !data.price || !data.categoryId) {
+//         return NextResponse.json(
+//           { error: "Missing required fields: name, price, or categoryId" },
+//           { status: 400 }
+//         );
+//       }
+
+//       const imageUrl =
+//         data.imageUrl && data.imageUrl.trim() !== "" ? data.imageUrl : null;
+
+//       const item = await prisma.item.create({
+//         data: {
+//           name: data.name,
+//           description: data.description || null,
+//           price: parseFloat(data.price),
+//           categoryId: data.categoryId,
+//           imageUrl, // ✅ store only valid URL
+//           tax: data.gst || null,
+//           discount: data.otherTax || null,
+//           stock: data.openingStock || null,
+//           variants: data.itemUnit ? { unit: data.itemUnit } : null,
+//         },
+//       });
+
+//       console.log("Item created in MongoDB:", item);
+//       return NextResponse.json(item, { status: 201 });
+//     } catch (err: any) {
+//       console.error("JSON POST error:", err);
+//       return NextResponse.json({ error: err.message }, { status: 500 });
+//     }
+//   }
+
+//   // ===== Case 2: multipart/form-data =====
+//   return new Promise((resolve, reject) => {
+//     const headers: Record<string, string> = {};
+//     req.headers.forEach((value, key) => (headers[key.toLowerCase()] = value));
+
+//     if (!headers["content-type"]?.includes("multipart/form-data")) {
+//       return reject(
+//         NextResponse.json(
+//           { error: `Unsupported content type: ${headers["content-type"]}` },
+//           { status: 400 }
+//         )
+//       );
+//     }
+
+//     const busboy = new Busboy({ headers });
+//     const fields: Record<string, any> = {};
+//     const fileUploadPromises: Promise<any>[] = [];
+
+//     // Upload file to Cloudinary
+//     busboy.on("file", (_name, file) => {
+//       const uploadPromise = new Promise((res, rej) => {
+//         const uploadStream = cloudinary.uploader.upload_stream(
+//           { upload_preset: "mybillingmenu" },
+//           (error, result) => {
+//             if (error) {
+//               console.error("Cloudinary upload error:", error);
+//               return rej(error);
+//             }
+//             if (!result?.secure_url) {
+//               return rej(new Error("No image URL returned from Cloudinary"));
+//             }
+//             res(result);
+//           }
+//         );
+//         file.pipe(uploadStream);
+//       });
+//       fileUploadPromises.push(uploadPromise);
+//     });
+
+//     busboy.on("field", (name, value) => {
+//       fields[name] = value;
+//     });
+
+//     busboy.on("finish", async () => {
+//       try {
+//         console.log("Multipart fields received:", fields);
+
+//         if (!fields.name || !fields.price || !fields.categoryId) {
+//           return reject(
+//             NextResponse.json(
+//               { error: "Missing required fields: name, price, or categoryId" },
+//               { status: 400 }
+//             )
+//           );
+//         }
+
+//         // Wait for Cloudinary uploads
+//         let imageUrl: string | null = null;
+//         if (fileUploadPromises.length > 0) {
+//           try {
+//             const uploadedResults = await Promise.all(fileUploadPromises);
+//             imageUrl =
+//               uploadedResults[0]?.secure_url &&
+//               uploadedResults[0].secure_url.trim() !== ""
+//                 ? uploadedResults[0].secure_url
+//                 : null;
+//             console.log("Uploaded Cloudinary URL:", imageUrl);
+//           } catch (err) {
+//             console.error("Cloudinary upload failed:", err);
+//             return reject(
+//               NextResponse.json({ error: "Image upload failed" }, { status: 500 })
+//             );
+//           }
+//         }
+
+//         const item = await prisma.item.create({
+//           data: {
+//             name: fields.name,
+//             description: fields.description || null,
+//             price: parseFloat(fields.price),
+//             categoryId: fields.categoryId,
+//             imageUrl,
+//             tax: fields.gst || null,
+//             discount: fields.otherTax || null,
+//             stock: fields.openingStock || null,
+//             variants: fields.itemUnit ? { unit: fields.itemUnit } : null,
+//           },
+//         });
+
+//         console.log("Item created in MongoDB:", item);
+//         resolve(NextResponse.json(item, { status: 201 }));
+//       } catch (err: any) {
+//         console.error("Prisma item creation failed:", err);
+//         reject(NextResponse.json({ error: err.message }, { status: 500 }));
+//       }
+//     });
+
+//     try {
+//       const nodeStream = toNodeReadable(req.body as ReadableStream<Uint8Array>);
+//       nodeStream.pipe(busboy);
+//     } catch (err: any) {
+//       console.error("Request body stream error:", err);
+//       reject(NextResponse.json({ error: err.message }, { status: 400 }));
+//     }
+//   });
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import cloudinary from "@/lib/cloudinary";
@@ -1903,18 +2085,18 @@ export async function POST(req: Request) {
           description: data.description || null,
           price: parseFloat(data.price),
           categoryId: data.categoryId,
-          imageUrl, // ✅ store only valid URL
-          tax: data.gst || null,
-          discount: data.otherTax || null,
-          stock: data.openingStock || null,
-          variants: data.itemUnit ? { unit: data.itemUnit } : null,
+          imageUrl,
+          tax: data.gst ? parseFloat(data.gst) : null,
+          discount: data.otherTax ? parseFloat(data.otherTax) : null,
+          stock: data.openingStock ? parseInt(data.openingStock) : null,
+          variants: data.itemUnit ? JSON.stringify({ unit: data.itemUnit }) : null,
         },
       });
 
-      console.log("Item created in MongoDB:", item);
+      console.log("✅ Item created in MongoDB:", item);
       return NextResponse.json(item, { status: 201 });
     } catch (err: any) {
-      console.error("JSON POST error:", err);
+      console.error("❌ JSON POST error:", err);
       return NextResponse.json({ error: err.message }, { status: 500 });
     }
   }
@@ -1944,13 +2126,13 @@ export async function POST(req: Request) {
           { upload_preset: "mybillingmenu" },
           (error, result) => {
             if (error) {
-              console.error("Cloudinary upload error:", error);
+              console.error("❌ Cloudinary upload error:", error);
               return rej(error);
             }
             if (!result?.secure_url) {
               return rej(new Error("No image URL returned from Cloudinary"));
             }
-            res(result);
+            res(result.secure_url);
           }
         );
         file.pipe(uploadStream);
@@ -1980,14 +2162,10 @@ export async function POST(req: Request) {
         if (fileUploadPromises.length > 0) {
           try {
             const uploadedResults = await Promise.all(fileUploadPromises);
-            imageUrl =
-              uploadedResults[0]?.secure_url &&
-              uploadedResults[0].secure_url.trim() !== ""
-                ? uploadedResults[0].secure_url
-                : null;
-            console.log("Uploaded Cloudinary URL:", imageUrl);
+            imageUrl = uploadedResults[0] || null;
+            console.log("✅ Uploaded Cloudinary URL:", imageUrl);
           } catch (err) {
-            console.error("Cloudinary upload failed:", err);
+            console.error("❌ Cloudinary upload failed:", err);
             return reject(
               NextResponse.json({ error: "Image upload failed" }, { status: 500 })
             );
@@ -2001,17 +2179,17 @@ export async function POST(req: Request) {
             price: parseFloat(fields.price),
             categoryId: fields.categoryId,
             imageUrl,
-            tax: fields.gst || null,
-            discount: fields.otherTax || null,
-            stock: fields.openingStock || null,
-            variants: fields.itemUnit ? { unit: fields.itemUnit } : null,
+            tax: fields.gst ? parseFloat(fields.gst) : null,
+            discount: fields.otherTax ? parseFloat(fields.otherTax) : null,
+            stock: fields.openingStock ? parseInt(fields.openingStock) : null,
+            variants: fields.itemUnit ? JSON.stringify({ unit: fields.itemUnit }) : null,
           },
         });
 
-        console.log("Item created in MongoDB:", item);
+        console.log("✅ Item created in MongoDB:", item);
         resolve(NextResponse.json(item, { status: 201 }));
       } catch (err: any) {
-        console.error("Prisma item creation failed:", err);
+        console.error("❌ Prisma item creation failed:", err);
         reject(NextResponse.json({ error: err.message }, { status: 500 }));
       }
     });
@@ -2020,7 +2198,7 @@ export async function POST(req: Request) {
       const nodeStream = toNodeReadable(req.body as ReadableStream<Uint8Array>);
       nodeStream.pipe(busboy);
     } catch (err: any) {
-      console.error("Request body stream error:", err);
+      console.error("❌ Request body stream error:", err);
       reject(NextResponse.json({ error: err.message }, { status: 400 }));
     }
   });
