@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ===================== MODELS =====================
+// ===================== BILLING & E-COMMERCE MODELS =====================
 
 model User {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
@@ -17,33 +17,30 @@ model User {
 }
 
 model Product {
-  id    String        @id @default(auto()) @map("_id") @db.ObjectId
+  id    String      @id @default(auto()) @map("_id") @db.ObjectId
   name  String
   price Float
-  bills BillProduct[] // 👈 opposite side of relation
+  bills BillProduct[]
 }
 
 model Bill {
-  id        String        @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String        @db.ObjectId
-  user      User          @relation(fields: [userId], references: [id])
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String      @db.ObjectId
+  user      User        @relation(fields: [userId], references: [id])
   products  BillProduct[]
   total     Float
-  createdAt DateTime      @default(now())
+  createdAt DateTime    @default(now())
 }
 
 model BillProduct {
   id        String @id @default(auto()) @map("_id") @db.ObjectId
   billId    String @db.ObjectId
   productId String @db.ObjectId
-
-  bill    Bill    @relation(fields: [billId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
-
-  quantity Int
+  bill      Bill    @relation(fields: [billId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
 }
 
-// ✅ Fixed self relation for Category
 model Category {
   id        String     @id @default(auto()) @map("_id") @db.ObjectId
   name      String
@@ -55,7 +52,6 @@ model Category {
   updatedAt DateTime   @updatedAt
 }
 
-// ✅ Updated Item model: `imageUrl` in code, mapped to `image` in DB
 model Item {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
@@ -63,11 +59,44 @@ model Item {
   price       Float
   tax         Float?
   discount    Float?
-  stock       Int?     // optional for shops
-  variants    Json?    // small/large, toppings etc.
+  stock       Int?
+  variants    Json?
   categoryId  String   @db.ObjectId
   category    Category @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  imageUrl    String?  @map("image") // 👈 changed from image to imageUrl
+  imageUrl    String?  @map("image")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ===================== DYNAMIC FORM MODELS =====================
+
+model Form {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  fields    Field[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Field {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  formId    String      @db.ObjectId
+  form      Form        @relation(fields: [formId], references: [id])
+  label     String
+  type      FieldType
+  required  Boolean     @default(false)
+  options   String[]
+  value     String?
+  values    String[]
+  fileUrl   String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+enum FieldType {
+  INPUT
+  SELECT
+  CHECKBOX
+  RADIO
+  FILE
 }
