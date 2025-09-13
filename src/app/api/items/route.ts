@@ -2041,11 +2041,361 @@
 
 
 
+// import { NextResponse } from "next/server";
+// import prisma from "@/lib/prisma";
+// import cloudinary from "@/lib/cloudinary";
+// import Busboy from "busboy";
+// import { Readable } from "stream";
+
+// // Helper: convert Web ReadableStream → Node Readable
+// function toNodeReadable(stream: ReadableStream<Uint8Array> | null): Readable {
+//   if (!stream) throw new Error("Request body is empty");
+//   const reader = stream.getReader();
+//   return new Readable({
+//     async read() {
+//       const { done, value } = await reader.read();
+//       if (done) this.push(null);
+//       else this.push(Buffer.from(value));
+//     },
+//   });
+// }
+
+// export async function POST(req: Request) {
+//   const contentType = req.headers.get("content-type") || "";
+
+//   // ===== Case 1: JSON request =====
+//   if (contentType.includes("application/json")) {
+//     try {
+//       const data = await req.json();
+//       console.log("Received JSON data:", data);
+
+//       if (!data.name || !data.price || !data.categoryId) {
+//         return NextResponse.json(
+//           { error: "Missing required fields: name, price, or categoryId" },
+//           { status: 400 }
+//         );
+//       }
+
+//       const imageUrl =
+//         data.imageUrl && data.imageUrl.trim() !== "" ? data.imageUrl : null;
+
+//       const item = await prisma.item.create({
+//         data: {
+//           name: data.name,
+//           description: data.description || null,
+//           price: parseFloat(data.price),
+//           categoryId: data.categoryId,
+//           imageUrl,
+//           tax: data.gst ? parseFloat(data.gst) : null,
+//           discount: data.otherTax ? parseFloat(data.otherTax) : null,
+//           stock: data.openingStock ? parseInt(data.openingStock) : null,
+//           variants: data.itemUnit ? JSON.stringify({ unit: data.itemUnit }) : null,
+//         },
+//       });
+
+//       console.log("✅ Item created in MongoDB:", item);
+//       return NextResponse.json(item, { status: 201 });
+//     } catch (err: any) {
+//       console.error("❌ JSON POST error:", err);
+//       return NextResponse.json({ error: err.message }, { status: 500 });
+//     }
+//   }
+
+//   // ===== Case 2: multipart/form-data =====
+//   return new Promise((resolve, reject) => {
+//     const headers: Record<string, string> = {};
+//     req.headers.forEach((value, key) => (headers[key.toLowerCase()] = value));
+
+//     if (!headers["content-type"]?.includes("multipart/form-data")) {
+//       return reject(
+//         NextResponse.json(
+//           { error: `Unsupported content type: ${headers["content-type"]}` },
+//           { status: 400 }
+//         )
+//       );
+//     }
+
+//     const busboy = new Busboy({ headers });
+//     const fields: Record<string, any> = {};
+//     const fileUploadPromises: Promise<any>[] = [];
+
+//     // Upload file to Cloudinary
+//     busboy.on("file", (_name, file) => {
+//       const uploadPromise = new Promise((res, rej) => {
+//         const uploadStream = cloudinary.uploader.upload_stream(
+//           { upload_preset: "mybillingmenu" },
+//           (error, result) => {
+//             if (error) {
+//               console.error("❌ Cloudinary upload error:", error);
+//               return rej(error);
+//             }
+//             if (!result?.secure_url) {
+//               return rej(new Error("No image URL returned from Cloudinary"));
+//             }
+//             res(result.secure_url);
+//           }
+//         );
+//         file.pipe(uploadStream);
+//       });
+//       fileUploadPromises.push(uploadPromise);
+//     });
+
+//     busboy.on("field", (name, value) => {
+//       fields[name] = value;
+//     });
+
+//     busboy.on("finish", async () => {
+//       try {
+//         console.log("Multipart fields received:", fields);
+
+//         if (!fields.name || !fields.price || !fields.categoryId) {
+//           return reject(
+//             NextResponse.json(
+//               { error: "Missing required fields: name, price, or categoryId" },
+//               { status: 400 }
+//             )
+//           );
+//         }
+
+//         // Wait for Cloudinary uploads
+//         let imageUrl: string | null = null;
+//         if (fileUploadPromises.length > 0) {
+//           try {
+//             const uploadedResults = await Promise.all(fileUploadPromises);
+//             imageUrl = uploadedResults[0] || null;
+//             console.log("✅ Uploaded Cloudinary URL:", imageUrl);
+//           } catch (err) {
+//             console.error("❌ Cloudinary upload failed:", err);
+//             return reject(
+//               NextResponse.json({ error: "Image upload failed" }, { status: 500 })
+//             );
+//           }
+//         }
+
+//         const item = await prisma.item.create({
+//           data: {
+//             name: fields.name,
+//             description: fields.description || null,
+//             price: parseFloat(fields.price),
+//             categoryId: fields.categoryId,
+//             imageUrl,
+//             tax: fields.gst ? parseFloat(fields.gst) : null,
+//             discount: fields.otherTax ? parseFloat(fields.otherTax) : null,
+//             stock: fields.openingStock ? parseInt(fields.openingStock) : null,
+//             variants: fields.itemUnit ? JSON.stringify({ unit: fields.itemUnit }) : null,
+//           },
+//         });
+
+//         console.log("✅ Item created in MongoDB:", item);
+//         resolve(NextResponse.json(item, { status: 201 }));
+//       } catch (err: any) {
+//         console.error("❌ Prisma item creation failed:", err);
+//         reject(NextResponse.json({ error: err.message }, { status: 500 }));
+//       }
+//     });
+
+//     try {
+//       const nodeStream = toNodeReadable(req.body as ReadableStream<Uint8Array>);
+//       nodeStream.pipe(busboy);
+//     } catch (err: any) {
+//       console.error("❌ Request body stream error:", err);
+//       reject(NextResponse.json({ error: err.message }, { status: 400 }));
+//     }
+//   });
+// }
+
+
+
+// import { NextResponse } from "next/server";
+// import prisma from "@/lib/prisma";
+// import cloudinary from "@/lib/cloudinary";
+// import Busboy from "busboy";
+// import { Readable } from "stream";
+// import { currentUser } from "@clerk/nextjs/server";
+
+// // Helper: convert Web ReadableStream → Node Readable
+// function toNodeReadable(stream: ReadableStream<Uint8Array> | null): Readable {
+//   if (!stream) throw new Error("Request body is empty");
+//   const reader = stream.getReader();
+//   return new Readable({
+//     async read() {
+//       const { done, value } = await reader.read();
+//       if (done) this.push(null);
+//       else this.push(Buffer.from(value));
+//     },
+//   });
+// }
+
+// export async function POST(req: Request) {
+//   try {
+//     // ✅ Get logged-in Clerk user
+//     const user = await currentUser();
+//     if (!user?.id)
+//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+//     const clerkId = user.id;
+
+//     // ✅ Find User in DB mapped to this Clerk ID
+//     const dbUser = await prisma.user.findUnique({ where: { clerkId } });
+//     if (!dbUser)
+//       return NextResponse.json(
+//         { error: "No User found for this Clerk ID" },
+//         { status: 404 }
+//       );
+
+//     const contentType = req.headers.get("content-type") || "";
+
+//     // ===== Case 1: JSON request =====
+//     if (contentType.includes("application/json")) {
+//       const data = await req.json();
+
+//       if (!data.name || !data.price || !data.categoryId) {
+//         return NextResponse.json(
+//           { error: "Missing required fields: name, price, or categoryId" },
+//           { status: 400 }
+//         );
+//       }
+
+//       // ✅ Ensure category exists
+//       const categoryExists = await prisma.category.findUnique({
+//         where: { id: data.categoryId },
+//       });
+//       if (!categoryExists) {
+//         return NextResponse.json(
+//           { error: "Category not found" },
+//           { status: 404 }
+//         );
+//       }
+
+//       const imageUrl =
+//         data.imageUrl && data.imageUrl.trim() !== "" ? data.imageUrl : null;
+
+//       const item = await prisma.item.create({
+//         data: {
+//           name: data.name,
+//           description: data.description || null,
+//           price: parseFloat(data.price),
+//           tax: data.gst ? parseFloat(data.gst) : null,
+//           discount: data.otherTax ? parseFloat(data.otherTax) : null,
+//           stock: data.openingStock ? parseInt(data.openingStock) : null,
+//           variants: data.itemUnit ? JSON.stringify({ unit: data.itemUnit }) : null,
+//           imageUrl,
+//           user: { connect: { id: dbUser.id } }, // ✅ connect existing user
+//           category: { connect: { id: data.categoryId } }, // ✅ connect existing category
+//         },
+//       });
+
+//       return NextResponse.json(item, { status: 201 });
+//     }
+
+//     // ===== Case 2: multipart/form-data =====
+//     return new Promise((resolve, reject) => {
+//       const headers: Record<string, string> = {};
+//       req.headers.forEach((value, key) => (headers[key.toLowerCase()] = value));
+
+//       if (!headers["content-type"]?.includes("multipart/form-data")) {
+//         return reject(
+//           NextResponse.json(
+//             { error: `Unsupported content type: ${headers["content-type"]}` },
+//             { status: 400 }
+//           )
+//         );
+//       }
+
+//       const busboy = new Busboy({ headers });
+//       const fields: Record<string, any> = {};
+//       const fileUploadPromises: Promise<string>[] = [];
+
+//       busboy.on("file", (_name, file) => {
+//         const uploadPromise = new Promise<string>((res, rej) => {
+//           const uploadStream = cloudinary.uploader.upload_stream(
+//             { upload_preset: "mybillingmenu" },
+//             (error, result) => {
+//               if (error) return rej(error);
+//               if (!result?.secure_url)
+//                 return rej(new Error("No image URL returned from Cloudinary"));
+//               res(result.secure_url);
+//             }
+//           );
+//           file.pipe(uploadStream);
+//         });
+//         fileUploadPromises.push(uploadPromise);
+//       });
+
+//       busboy.on("field", (name, value) => {
+//         fields[name] = value;
+//       });
+
+//       busboy.on("finish", async () => {
+//         try {
+//           if (!fields.name || !fields.price || !fields.categoryId) {
+//             return reject(
+//               NextResponse.json(
+//                 { error: "Missing required fields: name, price, or categoryId" },
+//                 { status: 400 }
+//               )
+//             );
+//           }
+
+//           // ✅ Ensure category exists
+//           const categoryExists = await prisma.category.findUnique({
+//             where: { id: fields.categoryId },
+//           });
+//           if (!categoryExists) {
+//             return reject(
+//               NextResponse.json({ error: "Category not found" }, { status: 404 })
+//             );
+//           }
+
+//           let imageUrl: string | null = null;
+//           if (fileUploadPromises.length > 0) {
+//             const uploadedResults = await Promise.all(fileUploadPromises);
+//             imageUrl = uploadedResults[0] || null;
+//           }
+
+//           const item = await prisma.item.create({
+//             data: {
+//               name: fields.name,
+//               description: fields.description || null,
+//               price: parseFloat(fields.price),
+//               tax: fields.gst ? parseFloat(fields.gst) : null,
+//               discount: fields.otherTax ? parseFloat(fields.otherTax) : null,
+//               stock: fields.openingStock ? parseInt(fields.openingStock) : null,
+//               variants: fields.itemUnit ? JSON.stringify({ unit: fields.itemUnit }) : null,
+//               imageUrl,
+//               user: { connect: { id: dbUser.id } },
+//               category: { connect: { id: fields.categoryId } },
+//             },
+//           });
+
+//           resolve(NextResponse.json(item, { status: 201 }));
+//         } catch (err: any) {
+//           reject(NextResponse.json({ error: err.message }, { status: 500 }));
+//         }
+//       });
+
+//       try {
+//         const nodeStream = toNodeReadable(req.body as ReadableStream<Uint8Array>);
+//         nodeStream.pipe(busboy);
+//       } catch (err: any) {
+//         reject(NextResponse.json({ error: err.message }, { status: 400 }));
+//       }
+//     });
+//   } catch (err: any) {
+//     return NextResponse.json({ error: err.message }, { status: 500 });
+//   }
+// }
+
+
+
+
+
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import cloudinary from "@/lib/cloudinary";
 import Busboy from "busboy";
 import { Readable } from "stream";
+import { currentUser } from "@clerk/nextjs/server";
 
 // Helper: convert Web ReadableStream → Node Readable
 function toNodeReadable(stream: ReadableStream<Uint8Array> | null): Readable {
@@ -2061,13 +2411,31 @@ function toNodeReadable(stream: ReadableStream<Uint8Array> | null): Readable {
 }
 
 export async function POST(req: Request) {
-  const contentType = req.headers.get("content-type") || "";
+  try {
+    const user = await currentUser();
+    if (!user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const clerkId = user.id;
 
-  // ===== Case 1: JSON request =====
-  if (contentType.includes("application/json")) {
-    try {
+    // Try to find existing user
+    let dbUser = await prisma.user.findUnique({ where: { clerkId } });
+
+    // If user not found, create one
+    if (!dbUser) {
+      dbUser = await prisma.user.create({
+        data: {
+          clerkId,
+          name: user.firstName + (user.lastName ? " " + user.lastName : ""),
+          email: user.emailAddresses[0]?.emailAddress || `no-email-${clerkId}@example.com`,
+          role: "SELLER", // or "USER" if you prefer
+        },
+      });
+    }
+
+    const contentType = req.headers.get("content-type") || "";
+
+    // ===== Case 1: JSON request =====
+    if (contentType.includes("application/json")) {
       const data = await req.json();
-      console.log("Received JSON data:", data);
 
       if (!data.name || !data.price || !data.categoryId) {
         return NextResponse.json(
@@ -2076,130 +2444,254 @@ export async function POST(req: Request) {
         );
       }
 
-      const imageUrl =
-        data.imageUrl && data.imageUrl.trim() !== "" ? data.imageUrl : null;
+      const imageUrl = data.imageUrl?.trim() || null;
 
       const item = await prisma.item.create({
         data: {
           name: data.name,
           description: data.description || null,
           price: parseFloat(data.price),
-          categoryId: data.categoryId,
-          imageUrl,
           tax: data.gst ? parseFloat(data.gst) : null,
           discount: data.otherTax ? parseFloat(data.otherTax) : null,
           stock: data.openingStock ? parseInt(data.openingStock) : null,
           variants: data.itemUnit ? JSON.stringify({ unit: data.itemUnit }) : null,
+          imageUrl,
+          user: { connect: { id: dbUser.id } },
+          category: { connect: { id: data.categoryId } },
         },
       });
 
-      console.log("✅ Item created in MongoDB:", item);
       return NextResponse.json(item, { status: 201 });
-    } catch (err: any) {
-      console.error("❌ JSON POST error:", err);
-      return NextResponse.json({ error: err.message }, { status: 500 });
-    }
-  }
-
-  // ===== Case 2: multipart/form-data =====
-  return new Promise((resolve, reject) => {
-    const headers: Record<string, string> = {};
-    req.headers.forEach((value, key) => (headers[key.toLowerCase()] = value));
-
-    if (!headers["content-type"]?.includes("multipart/form-data")) {
-      return reject(
-        NextResponse.json(
-          { error: `Unsupported content type: ${headers["content-type"]}` },
-          { status: 400 }
-        )
-      );
     }
 
-    const busboy = new Busboy({ headers });
-    const fields: Record<string, any> = {};
-    const fileUploadPromises: Promise<any>[] = [];
+    // ===== Case 2: multipart/form-data =====
+    return new Promise((resolve, reject) => {
+      const headers: Record<string, string> = {};
+      req.headers.forEach((value, key) => (headers[key.toLowerCase()] = value));
 
-    // Upload file to Cloudinary
-    busboy.on("file", (_name, file) => {
-      const uploadPromise = new Promise((res, rej) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { upload_preset: "mybillingmenu" },
-          (error, result) => {
-            if (error) {
-              console.error("❌ Cloudinary upload error:", error);
-              return rej(error);
-            }
-            if (!result?.secure_url) {
-              return rej(new Error("No image URL returned from Cloudinary"));
-            }
-            res(result.secure_url);
-          }
+      if (!headers["content-type"]?.includes("multipart/form-data")) {
+        return reject(
+          NextResponse.json(
+            { error: `Unsupported content type: ${headers["content-type"]}` },
+            { status: 400 }
+          )
         );
-        file.pipe(uploadStream);
-      });
-      fileUploadPromises.push(uploadPromise);
-    });
+      }
 
-    busboy.on("field", (name, value) => {
-      fields[name] = value;
-    });
+      const busboy = new Busboy({ headers });
+      const fields: Record<string, any> = {};
+      const fileUploadPromises: Promise<any>[] = [];
 
-    busboy.on("finish", async () => {
-      try {
-        console.log("Multipart fields received:", fields);
-
-        if (!fields.name || !fields.price || !fields.categoryId) {
-          return reject(
-            NextResponse.json(
-              { error: "Missing required fields: name, price, or categoryId" },
-              { status: 400 }
-            )
+      busboy.on("file", (_name, file) => {
+        const uploadPromise = new Promise((res, rej) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { upload_preset: "mybillingmenu" },
+            (error, result) => {
+              if (error) return rej(error);
+              if (!result?.secure_url) return rej(new Error("No image URL returned from Cloudinary"));
+              res(result.secure_url);
+            }
           );
-        }
+          file.pipe(uploadStream);
+        });
+        fileUploadPromises.push(uploadPromise);
+      });
 
-        // Wait for Cloudinary uploads
-        let imageUrl: string | null = null;
-        if (fileUploadPromises.length > 0) {
-          try {
-            const uploadedResults = await Promise.all(fileUploadPromises);
-            imageUrl = uploadedResults[0] || null;
-            console.log("✅ Uploaded Cloudinary URL:", imageUrl);
-          } catch (err) {
-            console.error("❌ Cloudinary upload failed:", err);
+      busboy.on("field", (name, value) => {
+        fields[name] = value;
+      });
+
+      busboy.on("finish", async () => {
+        try {
+          if (!fields.name || !fields.price || !fields.categoryId) {
             return reject(
-              NextResponse.json({ error: "Image upload failed" }, { status: 500 })
+              NextResponse.json(
+                { error: "Missing required fields: name, price, or categoryId" },
+                { status: 400 }
+              )
             );
           }
+
+          let imageUrl: string | null = null;
+          if (fileUploadPromises.length > 0) {
+            const uploadedResults = await Promise.all(fileUploadPromises);
+            imageUrl = uploadedResults[0] || null;
+          }
+
+          const item = await prisma.item.create({
+            data: {
+              name: fields.name,
+              description: fields.description || null,
+              price: parseFloat(fields.price),
+              tax: fields.gst ? parseFloat(fields.gst) : null,
+              discount: fields.otherTax ? parseFloat(fields.otherTax) : null,
+              stock: fields.openingStock ? parseInt(fields.openingStock) : null,
+              variants: fields.itemUnit ? JSON.stringify({ unit: fields.itemUnit }) : null,
+              imageUrl,
+              user: { connect: { id: dbUser.id } },
+              category: { connect: { id: fields.categoryId } },
+            },
+          });
+
+          resolve(NextResponse.json(item, { status: 201 }));
+        } catch (err: any) {
+          reject(NextResponse.json({ error: err.message }, { status: 500 }));
         }
+      });
 
-        const item = await prisma.item.create({
-          data: {
-            name: fields.name,
-            description: fields.description || null,
-            price: parseFloat(fields.price),
-            categoryId: fields.categoryId,
-            imageUrl,
-            tax: fields.gst ? parseFloat(fields.gst) : null,
-            discount: fields.otherTax ? parseFloat(fields.otherTax) : null,
-            stock: fields.openingStock ? parseInt(fields.openingStock) : null,
-            variants: fields.itemUnit ? JSON.stringify({ unit: fields.itemUnit }) : null,
-          },
-        });
-
-        console.log("✅ Item created in MongoDB:", item);
-        resolve(NextResponse.json(item, { status: 201 }));
-      } catch (err: any) {
-        console.error("❌ Prisma item creation failed:", err);
-        reject(NextResponse.json({ error: err.message }, { status: 500 }));
-      }
-    });
-
-    try {
       const nodeStream = toNodeReadable(req.body as ReadableStream<Uint8Array>);
       nodeStream.pipe(busboy);
-    } catch (err: any) {
-      console.error("❌ Request body stream error:", err);
-      reject(NextResponse.json({ error: err.message }, { status: 400 }));
-    }
-  });
+    });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
+
+
+
+
+
+// import { NextResponse } from "next/server";
+// import prisma from "@/lib/prisma";
+// import cloudinary from "@/lib/cloudinary";
+// import Busboy from "busboy";
+// import { Readable } from "stream";
+// import { currentUser } from "@clerk/nextjs/server";
+
+// // Helper: convert Web ReadableStream → Node Readable
+// function toNodeReadable(stream: ReadableStream<Uint8Array> | null): Readable {
+//   if (!stream) throw new Error("Request body is empty");
+//   const reader = stream.getReader();
+//   return new Readable({
+//     async read() {
+//       const { done, value } = await reader.read();
+//       if (done) this.push(null);
+//       else this.push(Buffer.from(value));
+//     },
+//   });
+// }
+
+// export async function POST(req: Request) {
+//   try {
+//     const { userId } = auth(); // ✅ Clerk-authenticated user
+//     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+//     const contentType = req.headers.get("content-type") || "";
+
+//     // ===== Case 1: JSON request =====
+//     if (contentType.includes("application/json")) {
+//       const data = await req.json();
+//       console.log("Received JSON data:", data);
+
+//       if (!data.name || !data.price || !data.categoryId) {
+//         return NextResponse.json(
+//           { error: "Missing required fields: name, price, or categoryId" },
+//           { status: 400 }
+//         );
+//       }
+
+//       const imageUrl =
+//         data.imageUrl && data.imageUrl.trim() !== "" ? data.imageUrl : null;
+
+//       const item = await prisma.item.create({
+//         data: {
+//           name: data.name,
+//           description: data.description || null,
+//           price: parseFloat(data.price),
+//           tax: data.gst ? parseFloat(data.gst) : null,
+//           discount: data.otherTax ? parseFloat(data.otherTax) : null,
+//           stock: data.openingStock ? parseInt(data.openingStock) : null,
+//           variants: data.itemUnit ? JSON.stringify({ unit: data.itemUnit }) : null,
+//           imageUrl,
+//           user: { connect: { clerkId: userId } }, // ✅ connect user via Clerk ID
+//           category: { connect: { id: data.categoryId } }, // ✅ connect category
+//         },
+//       });
+
+//       console.log("✅ Item created in MongoDB:", item);
+//       return NextResponse.json(item, { status: 201 });
+//     }
+
+//     // ===== Case 2: multipart/form-data =====
+//     return new Promise((resolve, reject) => {
+//       const headers: Record<string, string> = {};
+//       req.headers.forEach((value, key) => (headers[key.toLowerCase()] = value));
+
+//       if (!headers["content-type"]?.includes("multipart/form-data")) {
+//         return reject(
+//           NextResponse.json(
+//             { error: `Unsupported content type: ${headers["content-type"]}` },
+//             { status: 400 }
+//           )
+//         );
+//       }
+
+//       const busboy = new Busboy({ headers });
+//       const fields: Record<string, any> = {};
+//       const fileUploadPromises: Promise<any>[] = [];
+
+//       busboy.on("file", (_name, file) => {
+//         const uploadPromise = new Promise((res, rej) => {
+//           const uploadStream = cloudinary.uploader.upload_stream(
+//             { upload_preset: "mybillingmenu" },
+//             (error, result) => {
+//               if (error) return rej(error);
+//               if (!result?.secure_url) return rej(new Error("No image URL returned from Cloudinary"));
+//               res(result.secure_url);
+//             }
+//           );
+//           file.pipe(uploadStream);
+//         });
+//         fileUploadPromises.push(uploadPromise);
+//       });
+
+//       busboy.on("field", (name, value) => {
+//         fields[name] = value;
+//       });
+
+//       busboy.on("finish", async () => {
+//         try {
+//           if (!fields.name || !fields.price || !fields.categoryId) {
+//             return reject(
+//               NextResponse.json(
+//                 { error: "Missing required fields: name, price, or categoryId" },
+//                 { status: 400 }
+//               )
+//             );
+//           }
+
+//           let imageUrl: string | null = null;
+//           if (fileUploadPromises.length > 0) {
+//             const uploadedResults = await Promise.all(fileUploadPromises);
+//             imageUrl = uploadedResults[0] || null;
+//           }
+
+//           const item = await prisma.item.create({
+//             data: {
+//               name: fields.name,
+//               description: fields.description || null,
+//               price: parseFloat(fields.price),
+//               tax: fields.gst ? parseFloat(fields.gst) : null,
+//               discount: fields.otherTax ? parseFloat(fields.otherTax) : null,
+//               stock: fields.openingStock ? parseInt(fields.openingStock) : null,
+//               variants: fields.itemUnit ? JSON.stringify({ unit: fields.itemUnit }) : null,
+//               imageUrl,
+//               user: { connect: { clerkId: userId } },
+//               category: { connect: { id: fields.categoryId } },
+//             },
+//           });
+
+//           resolve(NextResponse.json(item, { status: 201 }));
+//         } catch (err: any) {
+//           reject(NextResponse.json({ error: err.message }, { status: 500 }));
+//         }
+//       });
+
+//       const nodeStream = toNodeReadable(req.body as ReadableStream<Uint8Array>);
+//       nodeStream.pipe(busboy);
+//     });
+//   } catch (err: any) {
+//     console.error("❌ POST error:", err);
+//     return NextResponse.json({ error: err.message }, { status: 500 });
+//   }
+// }

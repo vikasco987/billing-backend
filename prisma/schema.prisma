@@ -7,14 +7,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ===================== BILLING & E-COMMERCE MODELS =====================
+// ===================== ENUMS =====================
+
+enum Role {
+  USER
+  user
+  ADMIN
+  admin
+  SELLER
+  seller
+}
+
+enum FieldType {
+  INPUT
+  SELECT
+  CHECKBOX
+  RADIO
+  FILE
+}
+
+// ===================== USER =====================
 
 model User {
-  id    String @id @default(auto()) @map("_id") @db.ObjectId
-  name  String
-  email String @unique
-  bills Bill[]
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  email    String   @unique
+  clerkId  String   @unique          // Clerk userId
+  role     Role     @default(USER)
+
+  bills    Bill[]
+  items    Item[]        // each user can own many items
+  forms    Form[]        // each user can own many forms
 }
+
+// ===================== BILLING & E-COMMERCE MODELS =====================
 
 model Product {
   id    String      @id @default(auto()) @map("_id") @db.ObjectId
@@ -53,20 +79,45 @@ model Category {
 }
 
 model Item {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  description String?
-  price       Float
-  tax         Float?
-  discount    Float?
-  stock       Int?
-  variants    Json?
-  categoryId  String   @db.ObjectId
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  imageUrl    String?  @map("image")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  description   String?
+
+  // 🏷 Pricing
+  mrp           Float?            // Maximum Retail Price
+  purchasePrice Float?            // Buying price
+  sellingPrice  Float?            // Selling price (could default to mrp if not given)
+  gst           Float?            // GST percentage
+  discount      Float?            // Flat discount value or percent
+
+  // 📦 Inventory
+  openingStock  Int?              // Opening balance
+  currentStock  Int?              // Live stock
+  reorderLevel  Int?              // Alert when stock < reorderLevel
+  unit          String?           // Piece, Kg, Litre, etc.
+  barcode       String?           // Barcode or SKU
+
+  // 🎨 Product details
+  brand         String?
+  model         String?
+  size          String?
+  color         String?
+
+  // 🖼 Images
+  imageUrl      String?  @map("image")
+  gallery       String[] // multiple image URLs if needed
+
+  // 🔗 Relations
+  categoryId    String   @db.ObjectId
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  userId        String   // Clerk userId
+  user          User     @relation(fields: [userId], references: [clerkId])
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
+
 
 // ===================== DYNAMIC FORM MODELS =====================
 
@@ -74,29 +125,27 @@ model Form {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   title     String
   fields    Field[]
+
+  userId    String   // ✅ store Clerk ID as string
+  user      User     @relation(fields: [userId], references: [clerkId])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Field {
-  id        String      @id @default(auto()) @map("_id") @db.ObjectId
-  formId    String      @db.ObjectId
-  form      Form        @relation(fields: [formId], references: [id])
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  formId    String   @db.ObjectId
+  form      Form     @relation(fields: [formId], references: [id])
+
   label     String
   type      FieldType
-  required  Boolean     @default(false)
+  required  Boolean  @default(false)
   options   String[]
   value     String?
   values    String[]
   fileUrl   String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-}
 
-enum FieldType {
-  INPUT
-  SELECT
-  CHECKBOX
-  RADIO
-  FILE
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
