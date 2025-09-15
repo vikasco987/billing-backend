@@ -36,8 +36,9 @@ model User {
   role     Role     @default(USER)
 
   bills    Bill[]
-  items    Item[]        // each user can own many items
-  forms    Form[]        // each user can own many forms
+  items    Item[]
+  forms    Form[]
+  profiles BusinessProfile[]   // ✅ One user can have many business profiles
 }
 
 // ===================== BILLING & E-COMMERCE MODELS =====================
@@ -78,46 +79,49 @@ model Category {
   updatedAt DateTime   @updatedAt
 }
 
+// ===================== ITEM MODEL =====================
+
 model Item {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   name          String
   description   String?
 
-  // 🏷 Pricing
-  mrp           Float?            // Maximum Retail Price
-  purchasePrice Float?            // Buying price
-  sellingPrice  Float?            // Selling price (could default to mrp if not given)
-  gst           Float?            // GST percentage
-  discount      Float?            // Flat discount value or percent
+  // Pricing
+  price         Float?
+  mrp           Float?
+  purchasePrice Float?
+  sellingPrice  Float?
+  gst           Float?
+  discount      Float?
 
-  // 📦 Inventory
-  openingStock  Int?              // Opening balance
-  currentStock  Int?              // Live stock
-  reorderLevel  Int?              // Alert when stock < reorderLevel
-  unit          String?           // Piece, Kg, Litre, etc.
-  barcode       String?           // Barcode or SKU
+  // Inventory
+  stock         Int?
+  openingStock  Int?
+  currentStock  Int?
+  reorderLevel  Int?
+  unit          String?
+  barcode       String?
 
-  // 🎨 Product details
+  // Product details
   brand         String?
   model         String?
   size          String?
   color         String?
+  variants      Json?
 
-  // 🖼 Images
+  // Images
   imageUrl      String?  @map("image")
-  gallery       String[] // multiple image URLs if needed
+  gallery       String[]
 
-  // 🔗 Relations
+  // Relations
   categoryId    String   @db.ObjectId
   category      Category @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  userId        String   // Clerk userId
+  userId        String
   user          User     @relation(fields: [userId], references: [clerkId])
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
-
 
 // ===================== DYNAMIC FORM MODELS =====================
 
@@ -126,7 +130,7 @@ model Form {
   title     String
   fields    Field[]
 
-  userId    String   // ✅ store Clerk ID as string
+  userId    String
   user      User     @relation(fields: [userId], references: [clerkId])
 
   createdAt DateTime @default(now())
@@ -148,4 +152,29 @@ model Field {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ===================== BUSINESS PROFILE MODEL =====================
+
+model BusinessProfile {
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String
+  user               User     @relation(fields: [userId], references: [clerkId])
+
+  businessType       String?
+  businessName       String?
+  businessTagLine    String?
+  contactPersonName  String?
+  contactPersonPhone String?
+  contactPersonEmail String?
+
+  upi                String?
+  googleReviewUrl    String?
+
+  profileImageUrl    String?   // ✅ Main profile picture
+  logoUrl            String?   // ✅ Business Logo
+  signatureUrl       String?   // ✅ Business Signature
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }

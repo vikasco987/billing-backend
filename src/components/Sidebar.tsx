@@ -169,17 +169,162 @@
 
 
 
+// "use client";
+
+// import Link from "next/link";
+// import { useState } from "react";
+// import { Menu, X, User } from "lucide-react";
+// import ProfileForm from "@/components/profile/ProfileForm"; // ✅ Business Profile Form
+// import { motion, AnimatePresence } from "framer-motion";
+
+// export default function Sidebar() {
+//   const [isOpen, setIsOpen] = useState(false);
+//   const [showProfile, setShowProfile] = useState(false);
+
+//   return (
+//     <>
+//       {/* Top bar for mobile */}
+//       <div className="md:hidden flex items-center justify-between bg-gradient-to-r from-purple-700 to-indigo-800 text-white p-4 shadow-md">
+//         <h1 className="text-lg font-bold">📂 Menu</h1>
+//         <button
+//           onClick={() => setIsOpen(!isOpen)}
+//           className="p-2 rounded-md bg-white/10 hover:bg-white/20"
+//         >
+//           {isOpen ? <X size={24} /> : <Menu size={24} />}
+//         </button>
+//       </div>
+
+//       {/* Sidebar */}
+//       <aside
+//         className={`fixed md:static top-0 left-0 h-full w-72 bg-gradient-to-b from-gray-900 to-gray-800 text-white transform 
+//         ${isOpen ? "translate-x-0" : "-translate-x-full"} 
+//         md:translate-x-0 transition-transform duration-300 ease-in-out z-50 shadow-lg`}
+//       >
+//         <div className="p-4 text-xl font-extrabold border-b border-gray-700 hidden md:block">
+//           📂 Dashboard
+//         </div>
+
+//         {/* Navigation */}
+//         <nav className="flex-1 p-4 space-y-3">
+//           <Link
+//             href="/menu/upload"
+//             className="block px-3 py-2 rounded-md hover:bg-indigo-700 transition"
+//             onClick={() => setIsOpen(false)}
+//           >
+//             Upload Menu
+//           </Link>
+
+//           <Link
+//             href="/menu/view"
+//             className="block px-3 py-2 rounded-md hover:bg-indigo-700 transition"
+//             onClick={() => setIsOpen(false)}
+//           >
+//             View Menu
+//           </Link>
+
+//           {/* ✅ My Business Profile Button */}
+//           <button
+//             onClick={() => setShowProfile(true)}
+//             className="w-full flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 transition font-medium"
+//           >
+//             <User className="w-5 h-5" />
+//             My Business Profile
+//           </button>
+//         </nav>
+//       </aside>
+
+//       {/* Overlay for mobile */}
+//       {isOpen && (
+//         <div
+//           className="fixed inset-0 bg-black/50 md:hidden"
+//           onClick={() => setIsOpen(false)}
+//         ></div>
+//       )}
+
+//       {/* ✅ Drawer for Profile Form */}
+//       <AnimatePresence>
+//         {showProfile && (
+//           <>
+//             {/* Background Overlay */}
+//             <motion.div
+//               className="fixed inset-0 bg-black/50 z-40"
+//               initial={{ opacity: 0 }}
+//               animate={{ opacity: 1 }}
+//               exit={{ opacity: 0 }}
+//               onClick={() => setShowProfile(false)}
+//             />
+
+//             {/* Drawer */}
+//             <motion.div
+//               className="fixed right-0 top-0 h-full w-full md:w-[600px] bg-white shadow-2xl z-50 overflow-y-auto"
+//               initial={{ x: "100%" }}
+//               animate={{ x: 0 }}
+//               exit={{ x: "100%" }}
+//               transition={{ type: "tween", duration: 0.3 }}
+//             >
+//               {/* Header */}
+//               <div className="flex items-center justify-between p-4 border-b bg-gray-100">
+//                 <h2 className="text-xl font-bold text-gray-800">
+//                   🏢 My Business Profile
+//                 </h2>
+//                 <button
+//                   onClick={() => setShowProfile(false)}
+//                   className="text-gray-600 hover:text-red-600"
+//                 >
+//                   <X size={28} />
+//                 </button>
+//               </div>
+
+//               {/* Profile Form Inside Drawer */}
+//               <div className="p-6">
+//                 <ProfileForm />
+//               </div>
+//             </motion.div>
+//           </>
+//         )}
+//       </AnimatePresence>
+//     </>
+//   );
+// }
+
+
+
+
+
+
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Menu, X, User } from "lucide-react";
-import ProfileForm from "@/components/profile/ProfileForm"; // ✅ Business Profile Form
+import { useEffect, useState } from "react";
+import { Menu, X, User, Edit3 } from "lucide-react";
+import ProfileForm from "@/components/profile/ProfileForm";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // ✅ Fetch most recent profile
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch("/api/profile/recent");
+      if (res.ok) {
+        const data = await res.json();
+        setProfile(data || null);
+      }
+    } catch (err) {
+      console.error("Failed to load profile", err);
+    }
+  };
+
+  // Fetch when drawer opens
+  useEffect(() => {
+    if (showProfile) {
+      fetchProfile();
+    }
+  }, [showProfile]);
 
   return (
     <>
@@ -224,7 +369,10 @@ export default function Sidebar() {
 
           {/* ✅ My Business Profile Button */}
           <button
-            onClick={() => setShowProfile(true)}
+            onClick={() => {
+              setShowProfile(true);
+              setIsEditing(false); // reset edit mode
+            }}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 transition font-medium"
           >
             <User className="w-5 h-5" />
@@ -238,10 +386,10 @@ export default function Sidebar() {
         <div
           className="fixed inset-0 bg-black/50 md:hidden"
           onClick={() => setIsOpen(false)}
-        ></div>
+        />
       )}
 
-      {/* ✅ Drawer for Profile Form */}
+      {/* ✅ Drawer for Profile */}
       <AnimatePresence>
         {showProfile && (
           <>
@@ -275,9 +423,68 @@ export default function Sidebar() {
                 </button>
               </div>
 
-              {/* Profile Form Inside Drawer */}
+              {/* ✅ Content */}
               <div className="p-6">
-                <ProfileForm />
+                {/* Case 1: Profile exists & not editing → show card */}
+                {profile && !isEditing ? (
+                  <div className="bg-white shadow-lg rounded-xl p-6 space-y-4 border">
+                    {/* Logo */}
+                    {profile.fields.find((f: any) => f.label === "Logo")?.fileUrl && (
+                      <img
+                        src={profile.fields.find((f: any) => f.label === "Logo")?.fileUrl}
+                        alt="Logo"
+                        className="w-24 h-24 object-contain rounded-full mx-auto"
+                      />
+                    )}
+
+                    {/* Business Info */}
+                    <h3 className="text-2xl font-bold text-center text-gray-800">
+                      {profile.fields.find((f: any) => f.label === "Business Name")?.value}
+                    </h3>
+                    <p className="text-center text-gray-500">
+                      {profile.fields.find((f: any) => f.label === "Tagline")?.value}
+                    </p>
+
+                    <div className="space-y-2 text-gray-700">
+                      <p><strong>📌 Type:</strong> {profile.fields.find((f: any) => f.label === "Business Type")?.value}</p>
+                      <p><strong>👤 Contact:</strong> {profile.fields.find((f: any) => f.label === "Contact Person Name")?.value}</p>
+                      <p><strong>📞 Phone:</strong> {profile.fields.find((f: any) => f.label === "Phone")?.value}</p>
+                      <p><strong>✉️ Email:</strong> {profile.fields.find((f: any) => f.label === "Email")?.value}</p>
+                      <p><strong>💳 UPI:</strong> {profile.fields.find((f: any) => f.label === "UPI")?.value}</p>
+                      <p><strong>⭐ Reviews:</strong> {profile.fields.find((f: any) => f.label === "Google Review Link")?.value}</p>
+                      <p><strong>📝 Custom:</strong> {profile.fields.find((f: any) => f.label === "Custom Field")?.value}</p>
+                    </div>
+
+                    {/* Signature */}
+                    {profile.fields.find((f: any) => f.label === "Signature")?.fileUrl && (
+                      <div className="text-center">
+                        <p className="font-medium">Signature</p>
+                        <img
+                          src={profile.fields.find((f: any) => f.label === "Signature")?.fileUrl}
+                          alt="Signature"
+                          className="w-40 h-20 object-contain mx-auto"
+                        />
+                      </div>
+                    )}
+
+                    {/* Edit Button */}
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                    >
+                      <Edit3 size={18} /> Edit Profile
+                    </button>
+                  </div>
+                ) : (
+                  /* Case 2: No profile OR editing → show form */
+                  <ProfileForm
+                    initialData={isEditing ? profile : null}
+                    onSuccess={() => {
+                      setIsEditing(false);
+                      fetchProfile(); // refresh after save
+                    }}
+                  />
+                )}
               </div>
             </motion.div>
           </>
