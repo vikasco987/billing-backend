@@ -7,4 +7,3 @@ export async function GET() {
     api_secret: process.env.CLOUDINARY_API_SECRET ? "✅ loaded" : "❌ missing",
   });
 }
-i

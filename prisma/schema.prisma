@@ -38,7 +38,8 @@ model User {
   bills    Bill[]
   items    Item[]
   forms    Form[]
-  profiles BusinessProfile[]   // ✅ One user can have many business profiles
+  profiles BusinessProfile[]
+  uploads  Upload[]   // ✅ Added relation to Uploads
 }
 
 // ===================== BILLING & E-COMMERCE MODELS =====================
@@ -171,10 +172,23 @@ model BusinessProfile {
   upi                String?
   googleReviewUrl    String?
 
-  profileImageUrl    String?   // ✅ Main profile picture
-  logoUrl            String?   // ✅ Business Logo
-  signatureUrl       String?   // ✅ Business Signature
+  profileImageUrl    String?
+  logoUrl            String?
+  signatureUrl       String?
 
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+}
+
+// ===================== UPLOAD MODEL =====================
+
+model Upload {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  text      String?
+  imageUrl  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [clerkId])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
