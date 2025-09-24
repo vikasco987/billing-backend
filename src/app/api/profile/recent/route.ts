@@ -465,148 +465,78 @@
 
 
 
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { currentUser } from "@clerk/nextjs/server"; // ✅ Clerk import
+import { currentUser } from "@clerk/nextjs/server";
 
 // =============================
 // CREATE BUSINESS PROFILE (POST)
 // =============================
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-
-    // ---- GET LOGGED IN USER ----
+    // Receive JSON from frontend
+    const data = await req.json();
     const user = await currentUser();
+
     if (!user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // ---- VALIDATION ----
-    if (!body.businessType) {
-      return NextResponse.json(
-        { error: "Business Type is required" },
-        { status: 400 }
-      );
-    }
-    if (!body.businessName) {
-      return NextResponse.json(
-        { error: "Business Name is required" },
-        { status: 400 }
-      );
-    }
-    if (!body.contactName) {
-      return NextResponse.json(
-        { error: "Contact Person Name is required" },
-        { status: 400 }
-      );
-    }
-    if (!body.contactPhone) {
-      return NextResponse.json(
-        { error: "Phone number is required" },
-        { status: 400 }
-      );
-    }
-    if (!body.contactEmail) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
+    // ---- Extract fields ----
+    const {
+      businessType,
+      businessName,
+      businessTagline = "",
+      contactName,
+      contactPhone,
+      contactEmail,
+      upi = "",
+      reviewLink = "",
+      profileImage, // Cloudinary URL from frontend
+      logo,         // Cloudinary URL from frontend
+      signature,    // Cloudinary URL from frontend
+    } = data;
+
+    // ---- Validation ----
+    const required: Record<string, string> = {
+      businessType: "Business Type is required",
+      businessName: "Business Name is required",
+      contactName: "Contact Person Name is required",
+      contactPhone: "Phone number is required",
+      contactEmail: "Email is required",
+    };
+
+    for (const field in required) {
+      if (!data[field]) {
+        return NextResponse.json({ error: required[field] }, { status: 400 });
+      }
     }
 
-    // ---- CREATE FORM ----
-    const profile = await prisma.form.create({
+    // ---- Save profile to database ----
+    const profile = await prisma.businessProfile.create({
       data: {
-        title: "Business Profile",
-        userId: user.id, // ✅ link form to current user
-
-        fields: {
-          create: [
-            {
-              label: "Business Type",
-              type: "SELECT",
-              value: body.businessType,
-              options: [],
-            },
-            {
-              label: "Business Name",
-              type: "INPUT",
-              value: body.businessName,
-              options: [],
-            },
-            {
-              label: "Tagline",
-              type: "INPUT",
-              value: body.businessTagline || "",
-              options: [],
-            },
-            {
-              label: "Contact Person Name",
-              type: "INPUT",
-              value: body.contactName,
-              options: [],
-            },
-            {
-              label: "Phone",
-              type: "INPUT",
-              value: body.contactPhone,
-              options: [],
-            },
-            {
-              label: "Email",
-              type: "INPUT",
-              value: body.contactEmail,
-              options: [],
-            },
-            {
-              label: "UPI",
-              type: "INPUT",
-              value: body.upi || "",
-              options: [],
-            },
-            {
-              label: "Google Review Link",
-              type: "INPUT",
-              value: body.reviewLink || "",
-              options: [],
-            },
-            {
-              label: "Custom Field",
-              type: "INPUT",
-              value: body.customField || "",
-              options: [],
-            },
-            {
-              label: "Signature",
-              type: "FILE",
-              fileUrl: body.signature || "",
-              options: [],
-            },
-            {
-              label: "Logo",
-              type: "FILE",
-              fileUrl: body.logo || "",
-              options: [],
-            },
-          ],
-        },
+        userId: user.id,
+        businessType,
+        businessName,
+        businessTagLine: businessTagline,
+        contactPersonName: contactName,
+        contactPersonPhone: contactPhone,
+        contactPersonEmail: contactEmail,
+        upi,
+        googleReviewUrl: reviewLink,
+        profileImageUrl: profileImage || "",
+        logoUrl: logo || "",
+        signatureUrl: signature || "",
       },
-      include: { fields: true },
     });
 
     return NextResponse.json(profile, { status: 201 });
   } catch (err: any) {
     console.error("Profile save error:", err);
 
-    // Prisma-specific error handling
     if (err.code === "P2002") {
-      return NextResponse.json(
-        { error: "Duplicate entry detected" },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: "Duplicate entry" }, { status: 409 });
     }
 
     return NextResponse.json(
@@ -622,24 +552,14 @@ export async function POST(req: Request) {
 export async function GET() {
   try {
     const user = await currentUser();
+
     if (!user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const profile = await prisma.form.findFirst({
-      where: {
-        userId: user.id,
-        title: "Business Profile",
-      },
-      include: {
-        fields: true,
-      },
-      orderBy: {
-        createdAt: "desc", // latest profile first
-      },
+    const profile = await prisma.businessProfile.findFirst({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
     });
 
     if (!profile) {
