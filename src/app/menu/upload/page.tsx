@@ -3525,6 +3525,342 @@
 
 
 
+// "use client";
+
+// import { useState, useRef, useEffect } from "react";
+// import { motion } from "framer-motion";
+// import ImageUpload from "@/components/uploaditems/ImageUpload";
+// import CategorySelect from "@/components/uploaditems/CategorySelect";
+// import GstTaxSection from "@/components/uploaditems/GstTaxSection";
+// import ProductDetailsSection from "@/components/uploaditems/ProductDetailsSection";
+// import InventorySection from "@/components/uploaditems/InventorySection";
+// import DisplaySection from "@/components/uploaditems/DisplaySection";
+
+// export default function Page() {
+//   // 🔹 image is Cloudinary secure_url string, not File
+//   const [image, setImage] = useState<string | null>(null);
+//   const [openSection, setOpenSection] = useState<string | null>(null);
+//   const [isSaving, setIsSaving] = useState(false);
+//   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+//   const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+//   const formRef = useRef<HTMLFormElement>(null);
+
+//   useEffect(() => {
+//     const loadCategories = async () => {
+//       try {
+//         const res = await fetch("/api/categories");
+//         const data = await res.json();
+//         if (res.ok) setCategories(data);
+//       } catch (err) {
+//         console.error("❌ Failed to load categories:", err);
+//       }
+//     };
+//     loadCategories();
+//   }, []);
+
+//   const toggleSection = (section: string) => {
+//     setOpenSection(openSection === section ? null : section);
+//   };
+
+//   const handleSave = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     setIsSaving(true);
+
+//     const form = formRef.current;
+//     if (!form) return;
+
+//     // ✅ use image URL directly (already uploaded)
+//     if (!image) {
+//       alert("Please upload an image before saving.");
+//       setIsSaving(false);
+//       return;
+//     }
+
+//     // Collect all form fields
+//     const itemData = {
+//       name: (form.elements.namedItem("productName") as HTMLInputElement).value,
+//       price: parseFloat((form.elements.namedItem("sellPrice") as HTMLInputElement).value),
+//       itemUnit: (form.elements.namedItem("itemUnit") as HTMLSelectElement).value,
+//       categoryId: selectedCategory,
+//       mrp: parseFloat((form.elements.namedItem("mrp") as HTMLInputElement)?.value) || null,
+//       purchasePrice: parseFloat((form.elements.namedItem("purchasePrice") as HTMLInputElement)?.value) || null,
+//       gst: parseFloat((form.elements.namedItem("gst") as HTMLInputElement)?.value) || null,
+//       otherTax: parseFloat((form.elements.namedItem("otherTax") as HTMLInputElement)?.value) || null,
+//       brand: (form.elements.namedItem("brand") as HTMLInputElement)?.value || null,
+//       model: (form.elements.namedItem("model") as HTMLInputElement)?.value || null,
+//       description: (form.elements.namedItem("description") as HTMLTextAreaElement)?.value || null,
+//       openingStock: parseInt((form.elements.namedItem("openingStock") as HTMLInputElement)?.value) || null,
+//       reorderLevel: parseInt((form.elements.namedItem("reorderLevel") as HTMLInputElement)?.value) || null,
+//       displayCategory: (form.elements.namedItem("displayCategory") as HTMLInputElement)?.value || null,
+//       displayColor: (form.elements.namedItem("displayColor") as HTMLInputElement)?.value || null,
+//       imageUrl: image, // ✅ Cloudinary URL from state
+//     };
+
+//     try {
+//       const res = await fetch("/api/items", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify(itemData),
+//       });
+
+//       const data = await res.json();
+//       if (!res.ok) throw new Error(data.error || "Failed to save item");
+
+//       alert("✅ Item saved successfully!");
+//       form.reset();
+//       setImage(null);
+//       setOpenSection(null);
+//       setSelectedCategory("");
+//     } catch (error) {
+//       console.error("❌ Failed to save item:", error);
+//       alert("Failed to save item. Please check the form data.");
+//     } finally {
+//       setIsSaving(false);
+//     }
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-purple-100 flex items-center justify-center p-6">
+//       <motion.div
+//         className="w-full max-w-xl bg-white p-8 rounded-2xl shadow-2xl"
+//         initial={{ opacity: 0, y: 40 }}
+//         animate={{ opacity: 1, y: 0 }}
+//         transition={{ duration: 0.6, ease: "easeOut" }}
+//       >
+//         <h1 className="text-3xl font-bold text-purple-700 mb-6 text-center">➕ New Item</h1>
+
+//         <form onSubmit={handleSave} ref={formRef}>
+//           {/* 🔹 Upload handles Cloudinary URL */}
+//           <ImageUpload image={image} setImage={setImage} />
+
+//           <div className="mb-4">
+//             <input
+//               type="text"
+//               name="productName"
+//               placeholder="Product/Service Name *"
+//               className="w-full border rounded-lg px-4 py-3 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
+//               required
+//             />
+//           </div>
+
+//           <div className="grid grid-cols-2 gap-4 mb-4">
+//             <input
+//               type="number"
+//               name="sellPrice"
+//               placeholder="Sell Price *"
+//               className="w-full border rounded-lg px-4 py-3 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
+//               required
+//             />
+//             <select
+//               name="itemUnit"
+//               className="w-full border rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
+//             >
+//               <option value="">Item Unit</option>
+//               <option>Piece</option>
+//               <option>Kg</option>
+//               <option>Litre</option>
+//               <option>Pack</option>
+//             </select>
+//           </div>
+
+//           <CategorySelect
+//             categories={categories}
+//             selectedCategory={selectedCategory}
+//             setSelectedCategory={setSelectedCategory}
+//             setCategories={setCategories}
+//           />
+
+//           <div className="grid grid-cols-2 gap-4 mb-6">
+//             <input type="number" name="mrp" placeholder="MRP" className="w-full border rounded-lg px-4 py-3" />
+//             <input type="number" name="purchasePrice" placeholder="Purchase Price" className="w-full border rounded-lg px-4 py-3" />
+//           </div>
+
+//           <div className="space-y-4 mb-6">
+//             <GstTaxSection openSection={openSection} toggleSection={toggleSection} />
+//             <ProductDetailsSection openSection={openSection} toggleSection={toggleSection} />
+//             <InventorySection openSection={openSection} toggleSection={toggleSection} />
+//             <DisplaySection openSection={openSection} toggleSection={toggleSection} />
+//           </div>
+
+//           <motion.button
+//             whileHover={{ scale: 1.05 }}
+//             whileTap={{ scale: 0.95 }}
+//             type="submit"
+//             className="w-full bg-purple-600 text-white font-semibold py-3 rounded-xl shadow-md hover:bg-purple-700 transition"
+//             disabled={isSaving}
+//           >
+//             {isSaving ? "Saving..." : "SAVE"}
+//           </motion.button>
+//         </form>
+//       </motion.div>
+//     </div>
+//   );
+// }
+
+
+
+
+// "use client";
+
+// import { useState, useRef, useEffect } from "react";
+// import { motion } from "framer-motion";
+// import ImageUpload from "@/components/uploaditems/ImageUpload";
+// import CategorySelect from "@/components/uploaditems/CategorySelect";
+// import GstTaxSection from "@/components/uploaditems/GstTaxSection";
+// import ProductDetailsSection from "@/components/uploaditems/ProductDetailsSection";
+// import InventorySection from "@/components/uploaditems/InventorySection";
+// import DisplaySection from "@/components/uploaditems/DisplaySection";
+
+// export default function Page() {
+//   // 🔹 image is Cloudinary secure_url string, not File
+//   const [image, setImage] = useState<string | null>(null);
+//   const [openSection, setOpenSection] = useState<string | null>(null);
+//   const [isSaving, setIsSaving] = useState(false);
+//   const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+//   const formRef = useRef<HTMLFormElement>(null);
+
+//   const toggleSection = (section: string) => {
+//     setOpenSection(openSection === section ? null : section);
+//   };
+
+//   const handleSave = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     setIsSaving(true);
+
+//     const form = formRef.current;
+//     if (!form) return;
+
+//     if (!image) {
+//       alert("Please upload an image before saving.");
+//       setIsSaving(false);
+//       return;
+//     }
+
+//     // Collect all form fields
+//     const itemData = {
+//       name: (form.elements.namedItem("productName") as HTMLInputElement).value,
+//       price: parseFloat((form.elements.namedItem("sellPrice") as HTMLInputElement).value),
+//       itemUnit: (form.elements.namedItem("itemUnit") as HTMLSelectElement).value,
+//       categoryId: selectedCategory,
+//       mrp: parseFloat((form.elements.namedItem("mrp") as HTMLInputElement)?.value) || null,
+//       purchasePrice: parseFloat((form.elements.namedItem("purchasePrice") as HTMLInputElement)?.value) || null,
+//       gst: parseFloat((form.elements.namedItem("gst") as HTMLInputElement)?.value) || null,
+//       otherTax: parseFloat((form.elements.namedItem("otherTax") as HTMLInputElement)?.value) || null,
+//       brand: (form.elements.namedItem("brand") as HTMLInputElement)?.value || null,
+//       model: (form.elements.namedItem("model") as HTMLInputElement)?.value || null,
+//       description: (form.elements.namedItem("description") as HTMLTextAreaElement)?.value || null,
+//       openingStock: parseInt((form.elements.namedItem("openingStock") as HTMLInputElement)?.value) || null,
+//       reorderLevel: parseInt((form.elements.namedItem("reorderLevel") as HTMLInputElement)?.value) || null,
+//       displayCategory: (form.elements.namedItem("displayCategory") as HTMLInputElement)?.value || null,
+//       displayColor: (form.elements.namedItem("displayColor") as HTMLInputElement)?.value || null,
+//       imageUrl: image,
+//     };
+
+//     try {
+//       const res = await fetch("/api/items", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify(itemData),
+//       });
+
+//       const data = await res.json();
+//       if (!res.ok) throw new Error(data.error || "Failed to save item");
+
+//       alert("✅ Item saved successfully!");
+//       form.reset();
+//       setImage(null);
+//       setOpenSection(null);
+//       setSelectedCategory("");
+//     } catch (error) {
+//       console.error("❌ Failed to save item:", error);
+//       alert("Failed to save item. Please check the form data.");
+//     } finally {
+//       setIsSaving(false);
+//     }
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-purple-100 flex items-center justify-center p-6">
+//       <motion.div
+//         className="w-full max-w-xl bg-white p-8 rounded-2xl shadow-2xl"
+//         initial={{ opacity: 0, y: 40 }}
+//         animate={{ opacity: 1, y: 0 }}
+//         transition={{ duration: 0.6, ease: "easeOut" }}
+//       >
+//         <h1 className="text-3xl font-bold text-purple-700 mb-6 text-center">➕ New Item</h1>
+
+//         <form onSubmit={handleSave} ref={formRef}>
+//           <ImageUpload image={image} setImage={setImage} />
+
+//           <div className="mb-4">
+//             <input
+//               type="text"
+//               name="productName"
+//               placeholder="Product/Service Name *"
+//               className="w-full border rounded-lg px-4 py-3 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
+//               required
+//             />
+//           </div>
+
+//           <div className="grid grid-cols-2 gap-4 mb-4">
+//             <input
+//               type="number"
+//               name="sellPrice"
+//               placeholder="Sell Price *"
+//               className="w-full border rounded-lg px-4 py-3 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
+//               required
+//             />
+//             <select
+//               name="itemUnit"
+//               className="w-full border rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
+//             >
+//               <option value="">Item Unit</option>
+//               <option>Piece</option>
+//               <option>Kg</option>
+//               <option>Litre</option>
+//               <option>Pack</option>
+//             </select>
+//           </div>
+
+//           {/* ✅ Corrected CategorySelect usage */}
+//           <CategorySelect
+//             selectedCategory={selectedCategory}
+//             setSelectedCategory={setSelectedCategory}
+//           />
+
+//           <div className="grid grid-cols-2 gap-4 mb-6">
+//             <input type="number" name="mrp" placeholder="MRP" className="w-full border rounded-lg px-4 py-3" />
+//             <input type="number" name="purchasePrice" placeholder="Purchase Price" className="w-full border rounded-lg px-4 py-3" />
+//           </div>
+
+//           <div className="space-y-4 mb-6">
+//             <GstTaxSection openSection={openSection} toggleSection={toggleSection} />
+//             <ProductDetailsSection openSection={openSection} toggleSection={toggleSection} />
+//             <InventorySection openSection={openSection} toggleSection={toggleSection} />
+//             <DisplaySection openSection={openSection} toggleSection={toggleSection} />
+//           </div>
+
+//           <motion.button
+//             whileHover={{ scale: 1.05 }}
+//             whileTap={{ scale: 0.95 }}
+//             type="submit"
+//             className="w-full bg-purple-600 text-white font-semibold py-3 rounded-xl shadow-md hover:bg-purple-700 transition"
+//             disabled={isSaving}
+//           >
+//             {isSaving ? "Saving..." : "SAVE"}
+//           </motion.button>
+//         </form>
+//       </motion.div>
+//     </div>
+//   );
+// }
+
+
+
+
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -3541,11 +3877,14 @@ export default function Page() {
   const [image, setImage] = useState<string | null>(null);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // ✅ Lifted category state to page
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   const formRef = useRef<HTMLFormElement>(null);
 
+  // ✅ Load categories once
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -3570,14 +3909,12 @@ export default function Page() {
     const form = formRef.current;
     if (!form) return;
 
-    // ✅ use image URL directly (already uploaded)
     if (!image) {
       alert("Please upload an image before saving.");
       setIsSaving(false);
       return;
     }
 
-    // Collect all form fields
     const itemData = {
       name: (form.elements.namedItem("productName") as HTMLInputElement).value,
       price: parseFloat((form.elements.namedItem("sellPrice") as HTMLInputElement).value),
@@ -3594,7 +3931,7 @@ export default function Page() {
       reorderLevel: parseInt((form.elements.namedItem("reorderLevel") as HTMLInputElement)?.value) || null,
       displayCategory: (form.elements.namedItem("displayCategory") as HTMLInputElement)?.value || null,
       displayColor: (form.elements.namedItem("displayColor") as HTMLInputElement)?.value || null,
-      imageUrl: image, // ✅ Cloudinary URL from state
+      imageUrl: image,
     };
 
     try {
@@ -3631,7 +3968,6 @@ export default function Page() {
         <h1 className="text-3xl font-bold text-purple-700 mb-6 text-center">➕ New Item</h1>
 
         <form onSubmit={handleSave} ref={formRef}>
-          {/* 🔹 Upload handles Cloudinary URL */}
           <ImageUpload image={image} setImage={setImage} />
 
           <div className="mb-4">
@@ -3664,11 +4000,12 @@ export default function Page() {
             </select>
           </div>
 
+          {/* ✅ Fixed CategorySelect usage */}
           <CategorySelect
             categories={categories}
+            setCategories={setCategories}
             selectedCategory={selectedCategory}
             setSelectedCategory={setSelectedCategory}
-            setCategories={setCategories}
           />
 
           <div className="grid grid-cols-2 gap-4 mb-6">

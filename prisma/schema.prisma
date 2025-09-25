@@ -35,11 +35,12 @@ model User {
   clerkId  String   @unique          // Clerk userId
   role     Role     @default(USER)
 
-  bills    Bill[]
-  items    Item[]
-  forms    Form[]
-  profiles BusinessProfile[]
-  uploads  Upload[]   // ✅ Added relation to Uploads
+  bills     Bill[]
+  items     Item[]
+  forms     Form[]
+  profiles  BusinessProfile[]
+  uploads   Upload[]
+  purchases Purchase[]   // ✅ Opposite relation added
 }
 
 // ===================== BILLING & E-COMMERCE MODELS =====================
@@ -120,6 +121,8 @@ model Item {
   userId        String
   user          User     @relation(fields: [userId], references: [clerkId])
 
+  purchases     PurchaseItem[]   // ✅ Opposite relation added
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -191,4 +194,33 @@ model Upload {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ===================== PURCHASE MODELS =====================
+
+model Purchase {
+  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  vendorId    String
+  userId      String
+  user        User           @relation(fields: [userId], references: [clerkId])
+
+  totalAmount Float
+  invoiceNo   String?        // ✅ Added
+  status      String?        // ✅ Added
+  items       PurchaseItem[]
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model PurchaseItem {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  purchaseId String   @db.ObjectId
+  itemId     String   @db.ObjectId
+
+  quantity   Int
+  price      Float
+
+  purchase   Purchase @relation(fields: [purchaseId], references: [id])
+  item       Item     @relation(fields: [itemId], references: [id])
 }

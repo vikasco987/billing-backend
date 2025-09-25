@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const { vendorId, items, paymentMode, invoiceNo, userId } = body;
 
     // 1. Calculate total
-    const total = items.reduce((acc: number, item: any) => {
+    const totalAmount = items.reduce((acc: number, item: any) => {
       return acc + item.quantity * item.costPrice;
     }, 0);
 
@@ -17,26 +17,26 @@ export async function POST(req: Request) {
       data: {
         vendorId,
         userId,
-        total,
-        invoiceNo,
-        status: "PAID",
+        totalAmount, // ✅ match schema
+        // invoiceNo,   // ❌ your schema doesn’t have invoiceNo unless you add it
+        // status: "PAID", // ❌ not in schema, remove or add to schema
         items: {
           create: items.map((item: any) => ({
             itemId: item.itemId,
             quantity: item.quantity,
-            costPrice: item.costPrice,
+            price: item.costPrice, // ✅ schema expects `price`
           })),
         },
       },
-      include: { items: true, vendor: true },
+      include: { items: true, user: true },
     });
 
     // 3. Update stock in Item table
     for (const it of items) {
       await prisma.item.update({
         where: { id: it.itemId },
-        data: { 
-          stock: { increment: it.quantity } 
+        data: {
+          stock: { increment: it.quantity },
         },
       });
     }
@@ -44,7 +44,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, purchase });
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: "Failed to create purchase" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create purchase" },
+      { status: 500 }
+    );
   }
 }
 
@@ -52,12 +55,15 @@ export async function POST(req: Request) {
 export async function GET() {
   try {
     const purchases = await prisma.purchase.findMany({
-      include: { vendor: true, items: { include: { item: true } } },
+      include: { user: true, items: { include: { item: true } } },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(purchases);
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: "Failed to fetch purchases" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch purchases" },
+      { status: 500 }
+    );
   }
 }
