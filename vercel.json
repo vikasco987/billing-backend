@@ -1,11 +1,23 @@
 {
+  "version": 3,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "env": {
+    "DATABASE_URL": "@DATABASE_URL"
+  },
   "build": {
     "env": {
       "DATABASE_URL": "@DATABASE_URL"
     },
-    "ignoreCommand": "",
     "cache": {
       "node_modules": false
     }
-  }
+  },
+  "routes": [
+    { "src": "/(.*)", "dest": "/" }
+  ]
 }
