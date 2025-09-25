@@ -99,8 +99,3 @@ export default function GstTaxSection({
 
 
 
-
-
-// 'poiojok'
-// uijikolp;'
-// kojihujik'
