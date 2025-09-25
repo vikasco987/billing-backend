@@ -3861,9 +3861,454 @@
 
 
 
+// "use client";
+
+// import { useState, useRef, useEffect } from "react";
+// import { motion } from "framer-motion";
+// import ImageUpload from "@/components/uploaditems/ImageUpload";
+// import CategorySelect from "@/components/uploaditems/CategorySelect";
+// import GstTaxSection from "@/components/uploaditems/GstTaxSection";
+// import ProductDetailsSection from "@/components/uploaditems/ProductDetailsSection";
+// import InventorySection from "@/components/uploaditems/InventorySection";
+// import DisplaySection from "@/components/uploaditems/DisplaySection";
+
+// export default function Page() {
+//   // 🔹 image is Cloudinary secure_url string, not File
+//   const [image, setImage] = useState<string | null>(null);
+//   const [openSection, setOpenSection] = useState<string | null>(null);
+//   const [isSaving, setIsSaving] = useState(false);
+
+//   // ✅ Lifted category state to page
+//   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+//   const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+//   const formRef = useRef<HTMLFormElement>(null);
+
+//   // ✅ Load categories once
+//   useEffect(() => {
+//     const loadCategories = async () => {
+//       try {
+//         const res = await fetch("/api/categories");
+//         const data = await res.json();
+//         if (res.ok) setCategories(data);
+//       } catch (err) {
+//         console.error("❌ Failed to load categories:", err);
+//       }
+//     };
+//     loadCategories();
+//   }, []);
+
+//   const toggleSection = (section: string) => {
+//     setOpenSection(openSection === section ? null : section);
+//   };
+
+//   const handleSave = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     setIsSaving(true);
+
+//     const form = formRef.current;
+//     if (!form) return;
+
+//     if (!image) {
+//       alert("Please upload an image before saving.");
+//       setIsSaving(false);
+//       return;
+//     }
+
+//     const itemData = {
+//       name: (form.elements.namedItem("productName") as HTMLInputElement).value,
+//       price: parseFloat((form.elements.namedItem("sellPrice") as HTMLInputElement).value),
+//       itemUnit: (form.elements.namedItem("itemUnit") as HTMLSelectElement).value,
+//       categoryId: selectedCategory,
+//       mrp: parseFloat((form.elements.namedItem("mrp") as HTMLInputElement)?.value) || null,
+//       purchasePrice: parseFloat((form.elements.namedItem("purchasePrice") as HTMLInputElement)?.value) || null,
+//       gst: parseFloat((form.elements.namedItem("gst") as HTMLInputElement)?.value) || null,
+//       otherTax: parseFloat((form.elements.namedItem("otherTax") as HTMLInputElement)?.value) || null,
+//       brand: (form.elements.namedItem("brand") as HTMLInputElement)?.value || null,
+//       model: (form.elements.namedItem("model") as HTMLInputElement)?.value || null,
+//       description: (form.elements.namedItem("description") as HTMLTextAreaElement)?.value || null,
+//       openingStock: parseInt((form.elements.namedItem("openingStock") as HTMLInputElement)?.value) || null,
+//       reorderLevel: parseInt((form.elements.namedItem("reorderLevel") as HTMLInputElement)?.value) || null,
+//       displayCategory: (form.elements.namedItem("displayCategory") as HTMLInputElement)?.value || null,
+//       displayColor: (form.elements.namedItem("displayColor") as HTMLInputElement)?.value || null,
+//       imageUrl: image,
+//     };
+
+//     try {
+//       const res = await fetch("/api/items", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify(itemData),
+//       });
+
+//       const data = await res.json();
+//       if (!res.ok) throw new Error(data.error || "Failed to save item");
+
+//       alert("✅ Item saved successfully!");
+//       form.reset();
+//       setImage(null);
+//       setOpenSection(null);
+//       setSelectedCategory("");
+//     } catch (error) {
+//       console.error("❌ Failed to save item:", error);
+//       alert("Failed to save item. Please check the form data.");
+//     } finally {
+//       setIsSaving(false);
+//     }
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-purple-100 flex items-center justify-center p-6">
+//       <motion.div
+//         className="w-full max-w-xl bg-white p-8 rounded-2xl shadow-2xl"
+//         initial={{ opacity: 0, y: 40 }}
+//         animate={{ opacity: 1, y: 0 }}
+//         transition={{ duration: 0.6, ease: "easeOut" }}
+//       >
+//         <h1 className="text-3xl font-bold text-purple-700 mb-6 text-center">➕ New Item</h1>
+
+//         <form onSubmit={handleSave} ref={formRef}>
+//           <ImageUpload image={image} setImage={setImage} />
+
+//           <div className="mb-4">
+//             <input
+//               type="text"
+//               name="productName"
+//               placeholder="Product/Service Name *"
+//               className="w-full border rounded-lg px-4 py-3 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
+//               required
+//             />
+//           </div>
+
+//           <div className="grid grid-cols-2 gap-4 mb-4">
+//             <input
+//               type="number"
+//               name="sellPrice"
+//               placeholder="Sell Price *"
+//               className="w-full border rounded-lg px-4 py-3 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
+//               required
+//             />
+//             <select
+//               name="itemUnit"
+//               className="w-full border rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
+//             >
+//               <option value="">Item Unit</option>
+//               <option>Piece</option>
+//               <option>Kg</option>
+//               <option>Litre</option>
+//               <option>Pack</option>
+//             </select>
+//           </div>
+
+//           {/* ✅ Fixed CategorySelect usage */}
+//           <CategorySelect
+//             categories={categories}
+//             setCategories={setCategories}
+//             selectedCategory={selectedCategory}
+//             setSelectedCategory={setSelectedCategory}
+//           />
+
+//           <div className="grid grid-cols-2 gap-4 mb-6">
+//             <input type="number" name="mrp" placeholder="MRP" className="w-full border rounded-lg px-4 py-3" />
+//             <input type="number" name="purchasePrice" placeholder="Purchase Price" className="w-full border rounded-lg px-4 py-3" />
+//           </div>
+
+//           <div className="space-y-4 mb-6">
+//             <GstTaxSection openSection={openSection} toggleSection={toggleSection} />
+//             <ProductDetailsSection openSection={openSection} toggleSection={toggleSection} />
+//             <InventorySection openSection={openSection} toggleSection={toggleSection} />
+//             <DisplaySection openSection={openSection} toggleSection={toggleSection} />
+//           </div>
+
+//           <motion.button
+//             whileHover={{ scale: 1.05 }}
+//             whileTap={{ scale: 0.95 }}
+//             type="submit"
+//             className="w-full bg-purple-600 text-white font-semibold py-3 rounded-xl shadow-md hover:bg-purple-700 transition"
+//             disabled={isSaving}
+//           >
+//             {isSaving ? "Saving..." : "SAVE"}
+//           </motion.button>
+//         </form>
+//       </motion.div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+// "use client";
+
+// import { useState, useRef, useEffect, ChangeEvent } from "react";
+// import { motion } from "framer-motion";
+// import ImageUpload from "@/components/uploaditems/ImageUpload";
+// import CategorySelect from "@/components/uploaditems/CategorySelect";
+// import GstTaxSection from "@/components/uploaditems/GstTaxSection";
+// import ProductDetailsSection from "@/components/uploaditems/ProductDetailsSection";
+// import InventorySection from "@/components/uploaditems/InventorySection";
+// import DisplaySection from "@/components/uploaditems/DisplaySection";
+
+// export default function Page() {
+//   const [image, setImage] = useState<string | null>(null);
+//   const [openSection, setOpenSection] = useState<string | null>(null);
+//   const [isSaving, setIsSaving] = useState(false);
+
+//   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+//   const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+//   const formRef = useRef<HTMLFormElement>(null);
+
+//   const [formData, setFormData] = useState({
+//     productName: "",
+//     sellPrice: "",
+//     itemUnit: "",
+//     mrp: "",
+//     purchasePrice: "",
+//     gst: "",
+//     otherTax: "",
+//     brand: "",
+//     model: "",
+//     description: "",
+//     openingStock: "",
+//     reorderLevel: "",
+//     displayCategory: "",
+//     displayColor: "",
+//   });
+
+//   // Load categories from API
+//   useEffect(() => {
+//     const loadCategories = async () => {
+//       try {
+//         const res = await fetch("/api/categories");
+//         const data = await res.json();
+//         if (res.ok) setCategories(data);
+//       } catch (err) {
+//         console.error("❌ Failed to load categories:", err);
+//       }
+//     };
+//     loadCategories();
+//   }, []);
+
+//   const toggleSection = (section: string) => {
+//     setOpenSection(openSection === section ? null : section);
+//   };
+
+//   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+//     const { name, value } = e.target;
+//     setFormData(prev => ({ ...prev, [name]: value }));
+//   };
+
+//   const handleSave = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     setIsSaving(true);
+
+//     const form = formRef.current;
+//     if (!form) return;
+
+//     if (!image) {
+//       alert("Please upload an image before saving.");
+//       setIsSaving(false);
+//       return;
+//     }
+
+//     const parseFloatOrNull = (v: string) => {
+//       const n = parseFloat(v);
+//       return isNaN(n) ? null : n;
+//     };
+//     const parseIntOrNull = (v: string) => {
+//       const n = parseInt(v);
+//       return isNaN(n) ? null : n;
+//     };
+
+//     const itemData = {
+//       name: formData.productName || undefined,
+//       price: parseFloatOrNull(formData.sellPrice),
+//       unit: formData.itemUnit || null,
+//       categoryId: selectedCategory,
+//       mrp: parseFloatOrNull(formData.mrp),
+//       purchasePrice: parseFloatOrNull(formData.purchasePrice),
+//       gst: parseFloatOrNull(formData.gst),
+//       otherTax: parseFloatOrNull(formData.otherTax),
+//       brand: formData.brand || null,
+//       model: formData.model || null,
+//       description: formData.description || null,
+//       openingStock: parseIntOrNull(formData.openingStock),
+//       reorderLevel: parseIntOrNull(formData.reorderLevel),
+//       displayCategory: formData.displayCategory || null,
+//       displayColor: formData.displayColor || null,
+//       imageUrl: image,
+//     };
+
+//     try {
+//       const res = await fetch("/api/items", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify(itemData),
+//       });
+
+//       const data = await res.json();
+//       if (!res.ok) throw new Error(data.error || "Failed to save item");
+
+//       alert("✅ Item saved successfully!");
+//       form.reset();
+//       setFormData({
+//         productName: "",
+//         sellPrice: "",
+//         itemUnit: "",
+//         mrp: "",
+//         purchasePrice: "",
+//         gst: "",
+//         otherTax: "",
+//         brand: "",
+//         model: "",
+//         description: "",
+//         openingStock: "",
+//         reorderLevel: "",
+//         displayCategory: "",
+//         displayColor: "",
+//       });
+//       setImage(null);
+//       setOpenSection(null);
+//       setSelectedCategory("");
+//     } catch (error) {
+//       console.error("❌ Failed to save item:", error);
+//       alert("Failed to save item. Please check the form data.");
+//     } finally {
+//       setIsSaving(false);
+//     }
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-purple-100 flex items-center justify-center p-6">
+//       <motion.div
+//         className="w-full max-w-xl bg-white p-8 rounded-2xl shadow-2xl"
+//         initial={{ opacity: 0, y: 40 }}
+//         animate={{ opacity: 1, y: 0 }}
+//         transition={{ duration: 0.6, ease: "easeOut" }}
+//       >
+//         <h1 className="text-3xl font-bold text-purple-700 mb-6 text-center">➕ New Item</h1>
+
+//         <form onSubmit={handleSave} ref={formRef}>
+//           <ImageUpload image={image} setImage={setImage} />
+
+//           <div className="mb-4">
+//             <input
+//               type="text"
+//               name="productName"
+//               placeholder="Product/Service Name *"
+//               value={formData.productName}
+//               onChange={handleChange}
+//               className="w-full border rounded-lg px-4 py-3 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
+//               required
+//             />
+//           </div>
+
+//           <div className="grid grid-cols-2 gap-4 mb-4">
+//             <input
+//               type="number"
+//               name="sellPrice"
+//               placeholder="Sell Price *"
+//               value={formData.sellPrice}
+//               onChange={handleChange}
+//               className="w-full border rounded-lg px-4 py-3 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
+//               required
+//             />
+//             <select
+//               name="itemUnit"
+//               value={formData.itemUnit}
+//               onChange={handleChange}
+//               className="w-full border rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
+//             >
+//               <option value="">Item Unit</option>
+//               <option>Piece</option>
+//               <option>Kg</option>
+//               <option>Litre</option>
+//               <option>Pack</option>
+//             </select>
+//           </div>
+
+//           <CategorySelect
+//             categories={categories}
+//             setCategories={setCategories}
+//             selectedCategory={selectedCategory}
+//             setSelectedCategory={setSelectedCategory}
+//           />
+
+//           <div className="grid grid-cols-2 gap-4 mb-6">
+//             <input
+//               type="number"
+//               name="mrp"
+//               placeholder="MRP"
+//               value={formData.mrp}
+//               onChange={handleChange}
+//               className="w-full border rounded-lg px-4 py-3"
+//             />
+//             <input
+//               type="number"
+//               name="purchasePrice"
+//               placeholder="Purchase Price"
+//               value={formData.purchasePrice}
+//               onChange={handleChange}
+//               className="w-full border rounded-lg px-4 py-3"
+//             />
+//           </div>
+
+//           <div className="space-y-4 mb-6">
+//             <GstTaxSection
+//               openSection={openSection}
+//               toggleSection={toggleSection}
+//               formData={formData}
+//               handleChange={handleChange}
+//             />
+//             <ProductDetailsSection
+//               openSection={openSection}
+//               toggleSection={toggleSection}
+//               formData={formData}
+//               handleChange={handleChange}
+//             />
+//             <InventorySection
+//               openSection={openSection}
+//               toggleSection={toggleSection}
+//               formData={formData}
+//               handleChange={handleChange}
+//             />
+//             <DisplaySection
+//               openSection={openSection}
+//               toggleSection={toggleSection}
+//               formData={formData}
+//               handleChange={handleChange}
+//             />
+//           </div>
+
+//           <motion.button
+//             whileHover={{ scale: 1.05 }}
+//             whileTap={{ scale: 0.95 }}
+//             type="submit"
+//             className="w-full bg-purple-600 text-white font-semibold py-3 rounded-xl shadow-md hover:bg-purple-700 transition"
+//             disabled={isSaving}
+//           >
+//             {isSaving ? "Saving..." : "SAVE"}
+//           </motion.button>
+//         </form>
+//       </motion.div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, ChangeEvent } from "react";
 import { motion } from "framer-motion";
 import ImageUpload from "@/components/uploaditems/ImageUpload";
 import CategorySelect from "@/components/uploaditems/CategorySelect";
@@ -3873,18 +4318,36 @@ import InventorySection from "@/components/uploaditems/InventorySection";
 import DisplaySection from "@/components/uploaditems/DisplaySection";
 
 export default function Page() {
-  // 🔹 image is Cloudinary secure_url string, not File
   const [image, setImage] = useState<string | null>(null);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // ✅ Lifted category state to page
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   const formRef = useRef<HTMLFormElement>(null);
 
-  // ✅ Load categories once
+  const [formData, setFormData] = useState({
+    productName: "",
+    sellPrice: "",
+    itemUnit: "",
+    mrp: "",
+    purchasePrice: "",
+    gst: "",
+    otherTax: "",
+    brand: "",
+    model: "",
+    size: "",
+    color: "",
+    description: "",
+    openingStock: "",
+    currentStock: "",
+    reorderLevel: "",
+    displayCategory: "",
+    displayColor: "",
+  });
+
+  // Load categories from API
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -3902,12 +4365,18 @@ export default function Page() {
     setOpenSection(openSection === section ? null : section);
   };
 
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
 
-    const form = formRef.current;
-    if (!form) return;
+    if (!formRef.current) return;
 
     if (!image) {
       alert("Please upload an image before saving.");
@@ -3915,22 +4384,34 @@ export default function Page() {
       return;
     }
 
+    const parseFloatOrNull = (v: string) => {
+      const n = parseFloat(v);
+      return isNaN(n) ? null : n;
+    };
+    const parseIntOrNull = (v: string) => {
+      const n = parseInt(v);
+      return isNaN(n) ? null : n;
+    };
+
     const itemData = {
-      name: (form.elements.namedItem("productName") as HTMLInputElement).value,
-      price: parseFloat((form.elements.namedItem("sellPrice") as HTMLInputElement).value),
-      itemUnit: (form.elements.namedItem("itemUnit") as HTMLSelectElement).value,
+      name: formData.productName || undefined,
+      price: parseFloatOrNull(formData.sellPrice),
+      unit: formData.itemUnit || null,
       categoryId: selectedCategory,
-      mrp: parseFloat((form.elements.namedItem("mrp") as HTMLInputElement)?.value) || null,
-      purchasePrice: parseFloat((form.elements.namedItem("purchasePrice") as HTMLInputElement)?.value) || null,
-      gst: parseFloat((form.elements.namedItem("gst") as HTMLInputElement)?.value) || null,
-      otherTax: parseFloat((form.elements.namedItem("otherTax") as HTMLInputElement)?.value) || null,
-      brand: (form.elements.namedItem("brand") as HTMLInputElement)?.value || null,
-      model: (form.elements.namedItem("model") as HTMLInputElement)?.value || null,
-      description: (form.elements.namedItem("description") as HTMLTextAreaElement)?.value || null,
-      openingStock: parseInt((form.elements.namedItem("openingStock") as HTMLInputElement)?.value) || null,
-      reorderLevel: parseInt((form.elements.namedItem("reorderLevel") as HTMLInputElement)?.value) || null,
-      displayCategory: (form.elements.namedItem("displayCategory") as HTMLInputElement)?.value || null,
-      displayColor: (form.elements.namedItem("displayColor") as HTMLInputElement)?.value || null,
+      mrp: parseFloatOrNull(formData.mrp),
+      purchasePrice: parseFloatOrNull(formData.purchasePrice),
+      gst: parseFloatOrNull(formData.gst),
+      otherTax: parseFloatOrNull(formData.otherTax),
+      brand: formData.brand || null,
+      model: formData.model || null,
+      size: formData.size || null,
+      color: formData.color || null,
+      description: formData.description || null,
+      openingStock: parseIntOrNull(formData.openingStock),
+      currentStock: parseIntOrNull(formData.currentStock),
+      reorderLevel: parseIntOrNull(formData.reorderLevel),
+      displayCategory: formData.displayCategory || null,
+      displayColor: formData.displayColor || null,
       imageUrl: image,
     };
 
@@ -3945,7 +4426,26 @@ export default function Page() {
       if (!res.ok) throw new Error(data.error || "Failed to save item");
 
       alert("✅ Item saved successfully!");
-      form.reset();
+      formRef.current.reset();
+      setFormData({
+        productName: "",
+        sellPrice: "",
+        itemUnit: "",
+        mrp: "",
+        purchasePrice: "",
+        gst: "",
+        otherTax: "",
+        brand: "",
+        model: "",
+        size: "",
+        color: "",
+        description: "",
+        openingStock: "",
+        currentStock: "",
+        reorderLevel: "",
+        displayCategory: "",
+        displayColor: "",
+      });
       setImage(null);
       setOpenSection(null);
       setSelectedCategory("");
@@ -3965,7 +4465,9 @@ export default function Page() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <h1 className="text-3xl font-bold text-purple-700 mb-6 text-center">➕ New Item</h1>
+        <h1 className="text-3xl font-bold text-purple-700 mb-6 text-center">
+          ➕ New Item
+        </h1>
 
         <form onSubmit={handleSave} ref={formRef}>
           <ImageUpload image={image} setImage={setImage} />
@@ -3975,6 +4477,8 @@ export default function Page() {
               type="text"
               name="productName"
               placeholder="Product/Service Name *"
+              value={formData.productName}
+              onChange={handleChange}
               className="w-full border rounded-lg px-4 py-3 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
               required
             />
@@ -3985,11 +4489,15 @@ export default function Page() {
               type="number"
               name="sellPrice"
               placeholder="Sell Price *"
+              value={formData.sellPrice}
+              onChange={handleChange}
               className="w-full border rounded-lg px-4 py-3 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
               required
             />
             <select
               name="itemUnit"
+              value={formData.itemUnit}
+              onChange={handleChange}
               className="w-full border rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50"
             >
               <option value="">Item Unit</option>
@@ -4000,7 +4508,6 @@ export default function Page() {
             </select>
           </div>
 
-          {/* ✅ Fixed CategorySelect usage */}
           <CategorySelect
             categories={categories}
             setCategories={setCategories}
@@ -4009,15 +4516,49 @@ export default function Page() {
           />
 
           <div className="grid grid-cols-2 gap-4 mb-6">
-            <input type="number" name="mrp" placeholder="MRP" className="w-full border rounded-lg px-4 py-3" />
-            <input type="number" name="purchasePrice" placeholder="Purchase Price" className="w-full border rounded-lg px-4 py-3" />
+            <input
+              type="number"
+              name="mrp"
+              placeholder="MRP"
+              value={formData.mrp}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-4 py-3"
+            />
+            <input
+              type="number"
+              name="purchasePrice"
+              placeholder="Purchase Price"
+              value={formData.purchasePrice}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-4 py-3"
+            />
           </div>
 
           <div className="space-y-4 mb-6">
-            <GstTaxSection openSection={openSection} toggleSection={toggleSection} />
-            <ProductDetailsSection openSection={openSection} toggleSection={toggleSection} />
-            <InventorySection openSection={openSection} toggleSection={toggleSection} />
-            <DisplaySection openSection={openSection} toggleSection={toggleSection} />
+            <GstTaxSection
+              openSection={openSection}
+              toggleSection={toggleSection}
+              formData={formData}
+              handleChange={handleChange}
+            />
+            <ProductDetailsSection
+              openSection={openSection}
+              toggleSection={toggleSection}
+              formData={formData}
+              handleChange={handleChange}
+            />
+            <InventorySection
+              openSection={openSection}
+              toggleSection={toggleSection}
+              formData={formData}
+              handleChange={handleChange}
+            />
+            <DisplaySection
+              openSection={openSection}
+              toggleSection={toggleSection}
+              formData={formData}
+              handleChange={handleChange}
+            />
           </div>
 
           <motion.button

@@ -43,19 +43,52 @@
 
 
 
-// middleware.ts
-import {  clerkMiddleware } from "@clerk/nextjs/server";
+// // middleware.ts
+// import {  clerkMiddleware } from "@clerk/nextjs/server";
 
-export default  clerkMiddleware ({
-  // ✅ Public routes → no auth required
-  publicRoutes: ["/", "/sign-in", "/sign-up"],
+// export default  clerkMiddleware ({
+//   // ✅ Public routes → no auth required
+//   publicRoutes: ["/", "/sign-in", "/sign-up"],
 
-  // ✅ Ignored routes → skip Clerk entirely
-  ignoredRoutes: ["/api/webhook"],
+//   // ✅ Ignored routes → skip Clerk entirely
+//   ignoredRoutes: ["/api/webhook"],
 
-  // ✅ After sign-in, Clerk will automatically redirect to intended URL
+//   // ✅ After sign-in, Clerk will automatically redirect to intended URL
+// });
+
+// export const config = {
+//   matcher: [
+//     // Protect everything except static files, images, etc.
+//     "/((?!_next|.*\\..*).*)",
+//     "/(api|trpc)(.*)",
+//   ],
+// };
+
+
+
+
+
+// src/middleware.ts
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+
+// ✅ Define route matchers
+const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)"]);
+const isIgnoredRoute = createRouteMatcher(["/api/webhook"]);
+
+export default clerkMiddleware(async (auth, req) => {
+  // ⏭ Skip Clerk completely for ignored routes
+  if (isIgnoredRoute(req)) return;
+
+  // ✅ Get session info
+  const { userId } = await auth();
+
+  // 🔒 If not signed in and route is not public → block
+  if (!isPublicRoute(req) && !userId) {
+    return Response.redirect(new URL("/sign-in", req.url));
+  }
 });
 
+// ✅ Required Clerk config
 export const config = {
   matcher: [
     // Protect everything except static files, images, etc.

@@ -1,5 +1,5 @@
 // testPrisma.ts
-import prisma from './src/lib/prisma.ts';
+import prisma from './src/lib/prisma';
 
 
 async function main() {
