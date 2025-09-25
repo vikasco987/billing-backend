@@ -1,0 +1,11 @@
+{
+  "build": {
+    "env": {
+      "DATABASE_URL": "@DATABASE_URL"
+    },
+    "ignoreCommand": "",
+    "cache": {
+      "node_modules": false
+    }
+  }
+}
