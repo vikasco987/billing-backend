@@ -2,6 +2,6 @@
   "version": 2,
   "buildCommand": "prisma generate && next build --turbopack",
   "env": {
-    "DATABASE_URL": "@DATABASE_URL"
+    "DATABASE_URL": "mongodb+srv://Krishna:Radha%40987@billgsoftware.lprzjz2.mongodb.net/Billgsoftware?retryWrites=true&w=majority&appName=Billgsoftware"
   }
 }
