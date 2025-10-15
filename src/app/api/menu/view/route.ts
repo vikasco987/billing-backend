@@ -49,14 +49,10 @@
 
 
 
-
-
-
-
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
-import { verifyJwt } from "@clerk/clerk-sdk-node"; // ✅ correct export
+import { verifyJwt } from "@clerk/clerk-sdk-node";
 
 export async function GET(req: Request) {
   try {
@@ -76,7 +72,9 @@ export async function GET(req: Request) {
       const token = authHeader.replace("Bearer ", "").trim();
 
       try {
-        const payload = await verifyJwt(token); // ✅ just pass token
+        // ✅ Pass token + JWT key from env
+        const payload = await verifyJwt(token, process.env.CLERK_JWT_KEY as string);
+
         if (!payload || !payload.sub) {
           throw new Error("Invalid token payload");
         }
