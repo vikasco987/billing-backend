@@ -46,9 +46,6 @@
 
 
 
-
-
-
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
@@ -72,8 +69,10 @@ export async function GET(req: Request) {
       const token = authHeader.replace("Bearer ", "").trim();
 
       try {
-        // ✅ Pass token + JWT key from env
-        const payload = await verifyJwt(token, process.env.CLERK_JWT_KEY as string);
+        // ✅ Pass token + JWT key from env as object
+        const payload = await verifyJwt(token, {
+          secret: process.env.CLERK_JWT_KEY,
+        });
 
         if (!payload || !payload.sub) {
           throw new Error("Invalid token payload");
