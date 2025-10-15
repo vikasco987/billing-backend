@@ -53,26 +53,21 @@
 
 
 
-
-
-
-
-// API: /api/menu/view/route.ts
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
-import { verifyJwt } from "@clerk/clerk-sdk-node"; // ✅ verify token
+import { verifyJwt } from "@clerk/clerk-sdk-node"; // ✅ correct export
 
 export async function GET(req: Request) {
   try {
     let clerkId: string | null = null;
 
-    // 1️⃣ Try web session
+    // 1️⃣ Web session
     const user = await currentUser();
     if (user?.id) {
       clerkId = user.id;
     } else {
-      // 2️⃣ Try mobile / Expo Bearer token
+      // 2️⃣ Mobile / Expo token
       const authHeader = req.headers.get("authorization");
       if (!authHeader?.startsWith("Bearer ")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -81,8 +76,11 @@ export async function GET(req: Request) {
       const token = authHeader.replace("Bearer ", "").trim();
 
       try {
-        const verified = await verifyJwt(token, { secret: process.env.CLERK_JWT_KEY });
-        clerkId = verified.sub;
+        const payload = await verifyJwt(token); // ✅ just pass token
+        if (!payload || !payload.sub) {
+          throw new Error("Invalid token payload");
+        }
+        clerkId = payload.sub;
       } catch (e) {
         console.error("❌ Invalid token from mobile:", e);
         return NextResponse.json({ error: "Invalid token" }, { status: 401 });
