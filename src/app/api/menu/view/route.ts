@@ -46,69 +46,55 @@
 
 
 
-
-
-
-
-
-
-
-
-// ✅ /api/menu/view/route.ts
+// API: /api/menu/view/route.ts
 import { NextResponse } from "next/server";
-import { currentUser, clerkClient } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { Clerk } from "@clerk/clerk-sdk-node"; // ✅ install this
+
+const clerkClient = new Clerk({ apiKey: process.env.CLERK_API_KEY });
 
 export async function GET(req: Request) {
   try {
-    // 1️⃣ Try to get user via Clerk session (Next.js frontend)
-    let user = await currentUser();
+    let clerkId: string | null = null;
 
-    // 2️⃣ If no user (e.g., mobile app), try to verify Bearer token manually
-    if (!user) {
+    // 1️⃣ Try web session
+    const user = await currentUser();
+    if (user?.id) {
+      clerkId = user.id;
+    } else {
+      // 2️⃣ Try mobile / Expo Bearer token
       const authHeader = req.headers.get("authorization");
-      if (authHeader?.startsWith("Bearer ")) {
-        const token = authHeader.replace("Bearer ", "").trim();
-        try {
-          const verified = await clerkClient.verifyToken(token);
-          user = verified.user;
-        } catch (e) {
-          console.error("❌ Invalid token from mobile:", e);
-        }
+      if (!authHeader?.startsWith("Bearer ")) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      const token = authHeader.replace("Bearer ", "").trim();
+
+      try {
+        const verified = await clerkClient.verifyJwt(token); // ✅ verify mobile token
+        clerkId = verified.sub;
+      } catch (e) {
+        console.error("❌ Invalid token from mobile:", e);
+        return NextResponse.json({ error: "Invalid token" }, { status: 401 });
       }
     }
 
-    // 3️⃣ Still no user → Unauthorized
-    if (!user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const clerkId = user.id;
-
-    // 4️⃣ Find matching user in your DB
-    const dbUser = await prisma.user.findUnique({
-      where: { clerkId },
-    });
-
+    // 3️⃣ DB check
+    const dbUser = await prisma.user.findUnique({ where: { clerkId } });
     if (!dbUser) {
       return NextResponse.json({ error: "User not found in DB" }, { status: 404 });
     }
 
-    // 5️⃣ Fetch menu categories
+    // 4️⃣ Fetch categories/items
     const categories = await prisma.category.findMany({
-      where: {
-        items: {
-          some: { userId: clerkId },
-        },
-      },
-      include: {
-        items: true,
-      },
+      where: { items: { some: { userId: clerkId } } },
+      include: { items: true },
     });
 
     return NextResponse.json({ menus: categories });
   } catch (err: any) {
-    console.error("🔥 API /menu/view error:", err);
+    console.error("API /menu/view error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
