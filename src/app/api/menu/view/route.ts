@@ -46,13 +46,22 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 // API: /api/menu/view/route.ts
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
-import { Clerk } from "@clerk/clerk-sdk-node"; // ✅ install this
-
-const clerkClient = new Clerk({ apiKey: process.env.CLERK_API_KEY });
+import { verifyJwt } from "@clerk/clerk-sdk-node"; // ✅ verify token
 
 export async function GET(req: Request) {
   try {
@@ -72,7 +81,7 @@ export async function GET(req: Request) {
       const token = authHeader.replace("Bearer ", "").trim();
 
       try {
-        const verified = await clerkClient.verifyJwt(token); // ✅ verify mobile token
+        const verified = await verifyJwt(token, { secret: process.env.CLERK_JWT_KEY });
         clerkId = verified.sub;
       } catch (e) {
         console.error("❌ Invalid token from mobile:", e);
