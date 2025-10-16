@@ -29,42 +29,43 @@ enum FieldType {
 // ===================== USER =====================
 
 model User {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  name     String
-  email    String   @unique
-  clerkId  String   @unique          // Clerk userId
-  role     Role     @default(USER)
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  name    String
+  email   String @unique
+  clerkId String @unique // Clerk userId
+  role    Role   @default(USER)
 
   bills     Bill[]
   items     Item[]
   forms     Form[]
   profiles  BusinessProfile[]
   uploads   Upload[]
-  purchases Purchase[]   // ✅ Opposite relation added
+  purchases Purchase[]
+  parties   Party[] // ✅ Added relation to Party model
 }
 
 // ===================== BILLING & E-COMMERCE MODELS =====================
 
 model Product {
-  id    String      @id @default(auto()) @map("_id") @db.ObjectId
+  id    String        @id @default(auto()) @map("_id") @db.ObjectId
   name  String
   price Float
   bills BillProduct[]
 }
 
 model Bill {
-  id        String      @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String      @db.ObjectId
-  user      User        @relation(fields: [userId], references: [id])
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String        @db.ObjectId
+  user      User          @relation(fields: [userId], references: [id])
   products  BillProduct[]
   total     Float
-  createdAt DateTime    @default(now())
+  createdAt DateTime      @default(now())
 }
 
 model BillProduct {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
-  billId    String @db.ObjectId
-  productId String @db.ObjectId
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  billId    String  @db.ObjectId
+  productId String  @db.ObjectId
   bill      Bill    @relation(fields: [billId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int
@@ -84,9 +85,9 @@ model Category {
 // ===================== ITEM MODEL =====================
 
 model Item {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  name          String
-  description   String?
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
 
   // Pricing
   price         Float?
@@ -97,62 +98,62 @@ model Item {
   discount      Float?
 
   // Inventory
-  stock         Int?
-  openingStock  Int?
-  currentStock  Int?
-  reorderLevel  Int?
-  unit          String?
-  barcode       String?
+  stock        Int?
+  openingStock Int?
+  currentStock Int?
+  reorderLevel Int?
+  unit         String?
+  barcode      String?
 
   // Product details
-  brand         String?
-  model         String?
-  size          String?
-  color         String?
-  variants      Json?
+  brand    String?
+  model    String?
+  size     String?
+  color    String?
+  variants Json?
 
   // Images
-  imageUrl      String?  @map("image")
-  gallery       String[]
+  imageUrl String?  @map("image")
+  gallery  String[]
 
   // Relations
-  categoryId    String   @db.ObjectId
-  category      Category @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  userId        String
-  user          User     @relation(fields: [userId], references: [clerkId])
+  categoryId String   @db.ObjectId
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  userId     String
+  user       User     @relation(fields: [userId], references: [clerkId])
 
-  purchases     PurchaseItem[]   // ✅ Opposite relation added
+  purchases PurchaseItem[]
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ===================== DYNAMIC FORM MODELS =====================
 
 model Form {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  fields    Field[]
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
+  title  String
+  fields Field[]
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [clerkId])
+  userId String
+  user   User   @relation(fields: [userId], references: [clerkId])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Field {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  formId    String   @db.ObjectId
-  form      Form     @relation(fields: [formId], references: [id])
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  formId String @db.ObjectId
+  form   Form   @relation(fields: [formId], references: [id])
 
-  label     String
-  type      FieldType
-  required  Boolean  @default(false)
-  options   String[]
-  value     String?
-  values    String[]
-  fileUrl   String?
+  label    String
+  type     FieldType
+  required Boolean   @default(false)
+  options  String[]
+  value    String?
+  values   String[]
+  fileUrl  String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -161,9 +162,9 @@ model Field {
 // ===================== BUSINESS PROFILE MODEL =====================
 
 model BusinessProfile {
-  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId             String
-  user               User     @relation(fields: [userId], references: [clerkId])
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String
+  user   User   @relation(fields: [userId], references: [clerkId])
 
   businessType       String?
   businessName       String?
@@ -172,25 +173,25 @@ model BusinessProfile {
   contactPersonPhone String?
   contactPersonEmail String?
 
-  upi                String?
-  googleReviewUrl    String?
+  upi             String?
+  googleReviewUrl String?
 
-  profileImageUrl    String?
-  logoUrl            String?
-  signatureUrl       String?
+  profileImageUrl String?
+  logoUrl         String?
+  signatureUrl    String?
 
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ===================== UPLOAD MODEL =====================
 
 model Upload {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  text      String?
-  imageUrl  String
-  userId    String
-  user      User     @relation(fields: [userId], references: [clerkId])
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  text     String?
+  imageUrl String
+  userId   String
+  user     User    @relation(fields: [userId], references: [clerkId])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -199,28 +200,41 @@ model Upload {
 // ===================== PURCHASE MODELS =====================
 
 model Purchase {
-  id          String         @id @default(auto()) @map("_id") @db.ObjectId
-  vendorId    String
-  userId      String
-  user        User           @relation(fields: [userId], references: [clerkId])
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  vendorId String
+  userId   String
+  user     User   @relation(fields: [userId], references: [clerkId])
 
   totalAmount Float
-  invoiceNo   String?        // ✅ Added
-  status      String?        // ✅ Added
+  invoiceNo   String?
+  status      String?
   items       PurchaseItem[]
 
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model PurchaseItem {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  purchaseId String   @db.ObjectId
-  itemId     String   @db.ObjectId
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  purchaseId String @db.ObjectId
+  itemId     String @db.ObjectId
 
-  quantity   Int
-  price      Float
+  quantity Int
+  price    Float
 
-  purchase   Purchase @relation(fields: [purchaseId], references: [id])
-  item       Item     @relation(fields: [itemId], references: [id])
+  purchase Purchase @relation(fields: [purchaseId], references: [id])
+  item     Item     @relation(fields: [itemId], references: [id])
+}
+
+// ===================== PARTY / CUSTOMER MODEL =====================
+
+model Party {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  phone     String    @unique
+  address   String?
+  dob       DateTime?
+  userId    String? // ✅ Linked to the User who created this party
+  user      User?     @relation(fields: [userId], references: [clerkId])
+  createdAt DateTime  @default(now())
 }
