@@ -1,6 +1,26 @@
+// 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface Party {
   id: string;
@@ -9,82 +29,84 @@ interface Party {
 }
 
 interface PartySelectorProps {
-  selectedPartyId: string | null;
-  setSelectedPartyId: (id: string | null) => void;
-  onAddParty: (party: Party) => void;
+  parties: Party[];
+  selectedParty: string;
+  setSelectedParty: (id: string) => void;
+  refreshParties?: () => void;
 }
 
-export default function PartySelector({ selectedPartyId, setSelectedPartyId, onAddParty }: PartySelectorProps) {
-  const [parties, setParties] = useState<Party[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+export default function PartySelector({
+  parties,
+  selectedParty,
+  setSelectedParty,
+  refreshParties,
+}: PartySelectorProps) {
+  const [newPartyName, setNewPartyName] = useState("");
+  const [newPartyPhone, setNewPartyPhone] = useState("");
 
-  useEffect(() => {
-    fetch("/api/parties")
-      .then((res) => res.json())
-      .then((data) => setParties(data))
-      .finally(() => setLoading(false));
-  }, []);
+  const handleAddNewParty = async () => {
+    if (!newPartyName.trim() || !newPartyPhone.trim()) {
+      alert("Please enter name and phone");
+      return;
+    }
 
-  const handleAddParty = async () => {
-    if (!name || !phone) return alert("Name & Phone required");
+    try {
+      const res = await fetch("/api/parties", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newPartyName, phone: newPartyPhone }),
+      });
 
-    const res = await fetch("/api/parties", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone }),
-    });
+      const data = await res.json();
 
-    const data = await res.json();
-    if (res.ok) {
-      onAddParty(data);
-      setSelectedPartyId(data.id);
-      setName("");
-      setPhone("");
-    } else {
-      alert(data.error || "Failed to add party");
+      if (res.ok) {
+        setSelectedParty(data.id);
+        setNewPartyName("");
+        setNewPartyPhone("");
+        alert("✅ Customer added!");
+        refreshParties?.();
+      } else {
+        alert(data?.error || "Failed to add customer");
+      }
+    } catch (err) {
+      console.error("Add party failed", err);
+      alert("❌ Failed to add customer. Check console.");
     }
   };
 
   return (
-    <div className="mb-4">
-      <label className="block font-semibold mb-1">Select Customer</label>
-      {loading ? (
-        <p>Loading parties...</p>
-      ) : (
-        <select
-          className="border p-2 rounded w-full mb-2"
-          value={selectedPartyId || ""}
-          onChange={(e) => setSelectedPartyId(e.target.value)}
-        >
-          <option value="">Walk-in Customer</option>
-          {parties.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name} ({p.phone})
-            </option>
-          ))}
-        </select>
-      )}
-
+    <div className="space-y-2 mb-6">
+      <h2 className="font-semibold">👤 Select or Add Customer</h2>
+      <select
+        className="border p-2 rounded w-full"
+        value={selectedParty}
+        onChange={(e) => setSelectedParty(e.target.value)}
+      >
+        <option value="">Select Customer</option>
+        {parties.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name} ({p.phone})
+          </option>
+        ))}
+      </select>
       <div className="flex gap-2 mt-2">
         <input
-          className="border p-2 rounded flex-1"
+          className="border p-2 flex-1 rounded"
           placeholder="New Customer Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={newPartyName}
+          onChange={(e) => setNewPartyName(e.target.value)}
         />
         <input
-          className="border p-2 rounded flex-1"
+          className="border p-2 flex-1 rounded"
           placeholder="Phone"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          value={newPartyPhone}
+          onChange={(e) => setNewPartyPhone(e.target.value)}
         />
         <button
-          onClick={handleAddParty}
-          className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700"
+          onClick={handleAddNewParty}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
         >
-          Add
+          ➕ Add
         </button>
       </div>
     </div>

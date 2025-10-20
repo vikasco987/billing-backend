@@ -574,11 +574,2733 @@
 
 
 
+// "use client";
+
+// import React, { useEffect, useState } from "react";
+
+// export default function BillingPage() {
+//   const [companyName, setCompanyName] = useState("My Billing Firm");
+//   const [companyAddress, setCompanyAddress] = useState("123 Market Road, Delhi");
+//   const [companyPhone, setCompanyPhone] = useState("9876543210");
+//   const [contactPerson, setContactPerson] = useState("");
+//   const [companyLogo, setCompanyLogo] = useState("");
+//   const [companySignature, setCompanySignature] = useState("");
+//   const [companyWebsite, setCompanyWebsite] = useState("");
+
+//   const [parties, setParties] = useState<any[]>([]);
+//   const [items, setItems] = useState<any[]>([]);
+//   const [selectedParty, setSelectedParty] = useState("");
+//   const [newPartyName, setNewPartyName] = useState("");
+//   const [newPartyPhone, setNewPartyPhone] = useState("");
+//   const [billItems, setBillItems] = useState<any[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const [loadingProfile, setLoadingProfile] = useState(true);
+
+//   // Safe fetch JSON
+//   const fetchJson = async (url: string) => {
+//     try {
+//       const res = await fetch(url);
+//       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+//       return res.json();
+//     } catch (err) {
+//       console.error("Failed to fetch JSON from", url, err);
+//       return null;
+//     }
+//   };
+
+//   // Load business profile
+//   useEffect(() => {
+//     fetchJson("/api/profile/recent").then((data) => {
+//       if (data) {
+//         setCompanyName(data.businessName || "");
+//         setCompanyAddress(
+//           `${data.contactPersonName || ""}, ${data.contactPersonEmail || ""}, ${data.contactPersonPhone || ""}`
+//         );
+//         setCompanyPhone(data.contactPersonPhone || "");
+//         setContactPerson(data.contactPersonName || "");
+//         setCompanyLogo(data.logoUrl || "");
+//         setCompanySignature(data.signatureUrl || "");
+//         setCompanyWebsite(data.websiteUrl || "");
+//       }
+//       setLoadingProfile(false);
+//     });
+//   }, []);
+
+//   // Load parties, items, and restore cart
+//   useEffect(() => {
+//     fetchJson("/api/parties").then((data) => data && setParties(data));
+//     fetchJson("/api/items").then((data) => data && setItems(data));
+
+//     const pendingCart = localStorage.getItem("pendingCart");
+//     if (pendingCart) {
+//       try {
+//         const cartItems = JSON.parse(pendingCart) as Record<string, any>;
+//         const itemsArray = Object.values(cartItems).map((item) => ({
+//           id: item.id,
+//           itemName: item.name,
+//           rate: item.price ?? 0,
+//           quantity: item.quantity,
+//         }));
+//         setBillItems(itemsArray);
+//       } catch (err) {
+//         console.error("Failed to parse pendingCart", err);
+//       }
+//     }
+//   }, []);
+
+//   const handleAddItem = (item: any) => {
+//     const existing = billItems.find((i) => i.id === item.id);
+//     if (existing) {
+//       setBillItems(
+//         billItems.map((i) =>
+//           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+//         )
+//       );
+//     } else {
+//       setBillItems([...billItems, { ...item, quantity: 1 }]);
+//     }
+//   };
+
+//   const handleQuantityChange = (id: string, qty: number) => {
+//     setBillItems(
+//       billItems.map((i) =>
+//         i.id === id ? { ...i, quantity: Math.max(1, qty) } : i
+//       )
+//     );
+//   };
+
+//   const total = billItems.reduce((sum, it) => sum + it.rate * it.quantity, 0);
+
+//   const handleAddNewParty = async () => {
+//     if (!newPartyName.trim() || !newPartyPhone.trim()) {
+//       alert("Please enter name and phone");
+//       return;
+//     }
+
+//     try {
+//       const res = await fetch("/api/parties", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ name: newPartyName, phone: newPartyPhone }),
+//       });
+//       const data = await res.json();
+//       if (res.ok) {
+//         setParties([...parties, data]);
+//         setSelectedParty(data.id);
+//         setNewPartyName("");
+//         setNewPartyPhone("");
+//         alert("✅ Customer added!");
+//       } else {
+//         alert(data?.error || "Failed to add customer");
+//       }
+//     } catch (err) {
+//       console.error("Add party failed", err);
+//       alert("❌ Failed to add customer. Check console.");
+//     }
+//   };
+
+//   const handleGenerateBill = async () => {
+//     if (!selectedParty) return alert("Please select a customer!");
+//     if (!billItems.length) return alert("Add at least one item!");
+
+//     setLoading(true);
+//     const party = parties.find((p) => p.id === selectedParty);
+
+//     try {
+//       const res = await fetch("/api/billing", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           userId: "USER_ID_HERE", // replace with Clerk ID/session
+//           customerId: party?.id,
+//           companyName,
+//           companyAddress,
+//           companyPhone,
+//           contactPerson,
+//           logoUrl: companyLogo,
+//           signatureUrl: companySignature,
+//           websiteUrl: companyWebsite,
+//           products: billItems.map((i) => ({
+//             productId: i.id,
+//             quantity: i.quantity,
+//             price: i.rate,
+//             total: i.rate * i.quantity,
+//           })),
+//           total,
+//         }),
+//       });
+
+//       const data = await res.json();
+
+//       if (res.ok) {
+//         alert("✅ Bill saved successfully!");
+//         setBillItems([]);
+//         localStorage.removeItem("pendingCart");
+//         localStorage.removeItem("pendingTotal");
+//       } else {
+//         alert(data?.error || "❌ Failed to save bill.");
+//       }
+//     } catch (err) {
+//       console.error("Bill generation failed", err);
+//       alert("❌ Failed to save bill. Check console.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handlePrint = () => window.print();
+
+//   if (loadingProfile) return <p className="p-6">Loading business profile...</p>;
+
+//   return (
+//     <div className="p-6 max-w-3xl mx-auto bg-white rounded-lg shadow">
+//       <h1 className="text-3xl font-bold text-center mb-6">🧾 Billing System</h1>
+
+//       {/* Company Info */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🏢 Company Info</h2>
+//         {companyLogo && <img src={companyLogo} alt="Logo" className="w-32 h-32 object-contain mb-2" />}
+//         <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Name" />
+//         <input value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Address" />
+//         <input value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Phone" />
+//         <input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} className="border p-2 w-full rounded" placeholder="Contact Person" />
+//         <input value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className="border p-2 w-full rounded" placeholder="Website URL" />
+//       </div>
+
+//       {/* Party Selector */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">👤 Select or Add Customer</h2>
+//         <select className="border p-2 rounded w-full" value={selectedParty} onChange={(e) => setSelectedParty(e.target.value)}>
+//           <option value="">Select Customer</option>
+//           {parties.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.phone})</option>)}
+//         </select>
+//         <div className="flex gap-2 mt-2">
+//           <input className="border p-2 flex-1 rounded" placeholder="New Customer Name" value={newPartyName} onChange={(e) => setNewPartyName(e.target.value)} />
+//           <input className="border p-2 flex-1 rounded" placeholder="Phone" value={newPartyPhone} onChange={(e) => setNewPartyPhone(e.target.value)} />
+//           <button onClick={handleAddNewParty} className="bg-blue-600 text-white px-4 py-2 rounded">➕ Add</button>
+//         </div>
+//       </div>
+
+//       {/* Items */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🛒 Select Items</h2>
+//         {items.map((item) => {
+//           const inCart = billItems.find((i) => i.id === item.id)?.quantity || 0;
+//           return (
+//             <div key={item.id} className="flex justify-between border-b py-2 items-center">
+//               <div>
+//                 <span className="font-medium">{item.itemName}</span>
+//                 <span className="text-sm text-gray-500 ml-2">₹{item.rate}</span>
+//               </div>
+//               <button onClick={() => handleAddItem(item)} className="bg-green-500 text-white px-3 py-1 rounded">Add</button>
+//               {inCart > 0 && <span className="ml-2 font-semibold text-green-600">{inCart}</span>}
+//             </div>
+//           );
+//         })}
+//       </div>
+
+//       {/* Bill Summary */}
+//       <div className="space-y-2 mb-6 border-t pt-4">
+//         <h2 className="font-semibold">📋 Bill Summary</h2>
+//         {billItems.map((bi) => (
+//           <div key={bi.id} className="flex justify-between items-center border-b py-2">
+//             <span>{bi.itemName}</span>
+//             <div className="flex items-center gap-2">
+//               <input type="number" value={bi.quantity} min="1" onChange={(e) => handleQuantityChange(bi.id, parseInt(e.target.value))} className="w-16 border p-1 rounded text-center" />
+//               <span>₹{bi.rate * bi.quantity}</span>
+//             </div>
+//           </div>
+//         ))}
+//         <div className="font-bold text-right mt-2">Total: ₹{total}</div>
+//       </div>
+
+//       {/* Actions */}
+//       <div className="flex gap-3 justify-end">
+//         <button onClick={handleGenerateBill} disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded">
+//           💾 {loading ? "Saving..." : "Generate Bill"}
+//         </button>
+//         <button onClick={handlePrint} className="bg-gray-700 text-white px-4 py-2 rounded">🖨️ Print</button>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+// "use client";
+
+// import React, { useEffect, useState } from "react";
+// import { useUser } from "@clerk/nextjs";
+
+// export default function BillingPage() {
+//   const { user } = useUser(); // ✅ Get current Clerk user
+//   const [companyName, setCompanyName] = useState("My Billing Firm");
+//   const [companyAddress, setCompanyAddress] = useState("123 Market Road, Delhi");
+//   const [companyPhone, setCompanyPhone] = useState("9876543210");
+//   const [contactPerson, setContactPerson] = useState("");
+//   const [companyLogo, setCompanyLogo] = useState("");
+//   const [companySignature, setCompanySignature] = useState("");
+//   const [companyWebsite, setCompanyWebsite] = useState("");
+
+//   const [parties, setParties] = useState<any[]>([]);
+//   const [items, setItems] = useState<any[]>([]);
+//   const [selectedParty, setSelectedParty] = useState("");
+//   const [newPartyName, setNewPartyName] = useState("");
+//   const [newPartyPhone, setNewPartyPhone] = useState("");
+//   const [billItems, setBillItems] = useState<any[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const [loadingProfile, setLoadingProfile] = useState(true);
+
+//   const fetchJson = async (url: string) => {
+//     try {
+//       const res = await fetch(url);
+//       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+//       return res.json();
+//     } catch (err) {
+//       console.error("Failed to fetch JSON from", url, err);
+//       return null;
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchJson("/api/profile/recent").then((data) => {
+//       if (data) {
+//         setCompanyName(data.businessName || "");
+//         setCompanyAddress(
+//           `${data.contactPersonName || ""}, ${data.contactPersonEmail || ""}, ${data.contactPersonPhone || ""}`
+//         );
+//         setCompanyPhone(data.contactPersonPhone || "");
+//         setContactPerson(data.contactPersonName || "");
+//         setCompanyLogo(data.logoUrl || "");
+//         setCompanySignature(data.signatureUrl || "");
+//         setCompanyWebsite(data.websiteUrl || "");
+//       }
+//       setLoadingProfile(false);
+//     });
+//   }, []);
+
+//   useEffect(() => {
+//     fetchJson("/api/parties").then((data) => data && setParties(data));
+//     fetchJson("/api/items").then((data) => data && setItems(data));
+
+//     const pendingCart = localStorage.getItem("pendingCart");
+//     if (pendingCart) {
+//       try {
+//         const cartItems = JSON.parse(pendingCart) as Record<string, any>;
+//         const itemsArray = Object.values(cartItems).map((item) => ({
+//           id: item.id,
+//           itemName: item.name,
+//           rate: item.price ?? 0,
+//           quantity: item.quantity,
+//         }));
+//         setBillItems(itemsArray);
+//       } catch (err) {
+//         console.error("Failed to parse pendingCart", err);
+//       }
+//     }
+//   }, []);
+
+//   const handleAddItem = (item: any) => {
+//     const existing = billItems.find((i) => i.id === item.id);
+//     if (existing) {
+//       setBillItems(
+//         billItems.map((i) =>
+//           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+//         )
+//       );
+//     } else {
+//       setBillItems([...billItems, { ...item, quantity: 1 }]);
+//     }
+//   };
+
+//   const handleQuantityChange = (id: string, qty: number) => {
+//     setBillItems(
+//       billItems.map((i) =>
+//         i.id === id ? { ...i, quantity: Math.max(1, qty) } : i
+//       )
+//     );
+//   };
+
+//   const total = billItems.reduce((sum, it) => sum + it.rate * it.quantity, 0);
+
+//   const handleAddNewParty = async () => {
+//     if (!newPartyName.trim() || !newPartyPhone.trim()) {
+//       alert("Please enter name and phone");
+//       return;
+//     }
+
+//     try {
+//       const res = await fetch("/api/parties", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ name: newPartyName, phone: newPartyPhone }),
+//       });
+//       const data = await res.json();
+//       if (res.ok) {
+//         setParties([...parties, data]);
+//         setSelectedParty(data.id);
+//         setNewPartyName("");
+//         setNewPartyPhone("");
+//         alert("✅ Customer added!");
+//       } else {
+//         alert(data?.error || "Failed to add customer");
+//       }
+//     } catch (err) {
+//       console.error("Add party failed", err);
+//       alert("❌ Failed to add customer. Check console.");
+//     }
+//   };
+
+//   const handleGenerateBill = async () => {
+//     if (!user?.id) return alert("User not authenticated!");
+//     if (!selectedParty) return alert("Please select a customer!");
+//     if (!billItems.length) return alert("Add at least one item!");
+
+//     setLoading(true);
+//     const party = parties.find((p) => p.id === selectedParty);
+
+//     try {
+//       const res = await fetch("/api/billing", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           userClerkId: user.id, // ✅ send Clerk ID
+//           customerId: party?.id,
+//           companyName,
+//           companyAddress,
+//           companyPhone,
+//           contactPerson,
+//           logoUrl: companyLogo,
+//           signatureUrl: companySignature,
+//           websiteUrl: companyWebsite,
+//           products: billItems.map((i) => ({
+//             productId: i.id,
+//             quantity: i.quantity,
+//             price: i.rate,
+//             total: i.rate * i.quantity,
+//           })),
+//           total,
+//         }),
+//       });
+
+//       const data = await res.json();
+
+//       if (res.ok) {
+//         alert("✅ Bill saved successfully!");
+//         setBillItems([]);
+//         localStorage.removeItem("pendingCart");
+//         localStorage.removeItem("pendingTotal");
+//       } else {
+//         alert(data?.error || "❌ Failed to save bill.");
+//       }
+//     } catch (err) {
+//       console.error("Bill generation failed", err);
+//       alert("❌ Failed to save bill. Check console.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handlePrint = () => window.print();
+
+//   if (loadingProfile) return <p className="p-6">Loading business profile...</p>;
+
+//   return (
+//     <div className="p-6 max-w-3xl mx-auto bg-white rounded-lg shadow">
+//       <h1 className="text-3xl font-bold text-center mb-6">🧾 Billing System</h1>
+
+//       {/* Company Info */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🏢 Company Info</h2>
+//         {companyLogo && <img src={companyLogo} alt="Logo" className="w-32 h-32 object-contain mb-2" />}
+//         <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Name" />
+//         <input value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Address" />
+//         <input value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Phone" />
+//         <input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} className="border p-2 w-full rounded" placeholder="Contact Person" />
+//         <input value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className="border p-2 w-full rounded" placeholder="Website URL" />
+//       </div>
+
+//       {/* Party Selector */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">👤 Select or Add Customer</h2>
+//         <select className="border p-2 rounded w-full" value={selectedParty} onChange={(e) => setSelectedParty(e.target.value)}>
+//           <option value="">Select Customer</option>
+//           {parties.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.phone})</option>)}
+//         </select>
+//         <div className="flex gap-2 mt-2">
+//           <input className="border p-2 flex-1 rounded" placeholder="New Customer Name" value={newPartyName} onChange={(e) => setNewPartyName(e.target.value)} />
+//           <input className="border p-2 flex-1 rounded" placeholder="Phone" value={newPartyPhone} onChange={(e) => setNewPartyPhone(e.target.value)} />
+//           <button onClick={handleAddNewParty} className="bg-blue-600 text-white px-4 py-2 rounded">➕ Add</button>
+//         </div>
+//       </div>
+
+//       {/* Items */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🛒 Select Items</h2>
+//         {items.map((item) => {
+//           const inCart = billItems.find((i) => i.id === item.id)?.quantity || 0;
+//           return (
+//             <div key={item.id} className="flex justify-between border-b py-2 items-center">
+//               <div>
+//                 <span className="font-medium">{item.itemName}</span>
+//                 <span className="text-sm text-gray-500 ml-2">₹{item.rate}</span>
+//               </div>
+//               <button onClick={() => handleAddItem(item)} className="bg-green-500 text-white px-3 py-1 rounded">Add</button>
+//               {inCart > 0 && <span className="ml-2 font-semibold text-green-600">{inCart}</span>}
+//             </div>
+//           );
+//         })}
+//       </div>
+
+//       {/* Bill Summary */}
+//       <div className="space-y-2 mb-6 border-t pt-4">
+//         <h2 className="font-semibold">📋 Bill Summary</h2>
+//         {billItems.map((bi) => (
+//           <div key={bi.id} className="flex justify-between items-center border-b py-2">
+//             <span>{bi.itemName}</span>
+//             <div className="flex items-center gap-2">
+//               <input type="number" value={bi.quantity} min="1" onChange={(e) => handleQuantityChange(bi.id, parseInt(e.target.value))} className="w-16 border p-1 rounded text-center" />
+//               <span>₹{bi.rate * bi.quantity}</span>
+//             </div>
+//           </div>
+//         ))}
+//         <div className="font-bold text-right mt-2">Total: ₹{total}</div>
+//       </div>
+
+//       {/* Actions */}
+//       <div className="flex gap-3 justify-end">
+//         <button onClick={handleGenerateBill} disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded">
+//           💾 {loading ? "Saving..." : "Generate Bill"}
+//         </button>
+//         <button onClick={handlePrint} className="bg-gray-700 text-white px-4 py-2 rounded">🖨️ Print</button>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+// "use client";
+
+// import React, { useEffect, useState } from "react";
+// import { useUser } from "@clerk/nextjs";
+
+// interface BillItem {
+//   id: string;
+//   itemName: string;
+//   rate: number;
+//   quantity: number;
+// }
+
+// export default function BillingPage() {
+//   const { user } = useUser();
+//   const [companyName, setCompanyName] = useState("My Billing Firm");
+//   const [companyAddress, setCompanyAddress] = useState("123 Market Road, Delhi");
+//   const [companyPhone, setCompanyPhone] = useState("9876543210");
+//   const [contactPerson, setContactPerson] = useState("");
+//   const [companyLogo, setCompanyLogo] = useState("");
+//   const [companySignature, setCompanySignature] = useState("");
+//   const [companyWebsite, setCompanyWebsite] = useState("");
+
+//   const [parties, setParties] = useState<any[]>([]);
+//   const [items, setItems] = useState<any[]>([]);
+//   const [selectedParty, setSelectedParty] = useState("");
+//   const [newPartyName, setNewPartyName] = useState("");
+//   const [newPartyPhone, setNewPartyPhone] = useState("");
+//   const [billItems, setBillItems] = useState<BillItem[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const [loadingProfile, setLoadingProfile] = useState(true);
+
+//   const fetchJson = async (url: string) => {
+//     try {
+//       const res = await fetch(url);
+//       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+//       return res.json();
+//     } catch (err) {
+//       console.error("Failed to fetch JSON from", url, err);
+//       return null;
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchJson("/api/profile/recent").then((data) => {
+//       if (data) {
+//         setCompanyName(data.businessName || "");
+//         setCompanyAddress(
+//           `${data.contactPersonName || ""}, ${data.contactPersonEmail || ""}, ${data.contactPersonPhone || ""}`
+//         );
+//         setCompanyPhone(data.contactPersonPhone || "");
+//         setContactPerson(data.contactPersonName || "");
+//         setCompanyLogo(data.logoUrl || "");
+//         setCompanySignature(data.signatureUrl || "");
+//         setCompanyWebsite(data.websiteUrl || "");
+//       }
+//       setLoadingProfile(false);
+//     });
+//   }, []);
+
+//   useEffect(() => {
+//     fetchJson("/api/parties").then((data) => data && setParties(data));
+//     fetchJson("/api/items").then((data) => data && setItems(data));
+
+//     const pendingCart = localStorage.getItem("pendingCart");
+//     if (pendingCart) {
+//       try {
+//         const cartItems = JSON.parse(pendingCart) as Record<string, any>;
+//         const itemsArray = Object.values(cartItems)
+//           .filter(item => item.id && item.name)
+//           .map((item) => ({
+//             id: item.id,
+//             itemName: item.name,
+//             rate: item.price ?? 0,
+//             quantity: item.quantity ?? 1,
+//           }));
+//         setBillItems(itemsArray);
+//       } catch (err) {
+//         console.error("Failed to parse pendingCart", err);
+//       }
+//     }
+//   }, []);
+
+//   const handleAddItem = (item: any) => {
+//     const existing = billItems.find((i) => i.id === item.id);
+//     if (existing) {
+//       setBillItems(
+//         billItems.map((i) =>
+//           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+//         )
+//       );
+//     } else {
+//       setBillItems([...billItems, { ...item, quantity: 1 }]);
+//     }
+//   };
+
+//   const handleQuantityChange = (id: string, qty: number) => {
+//     setBillItems(
+//       billItems.map((i) =>
+//         i.id === id ? { ...i, quantity: Math.max(1, qty) } : i
+//       )
+//     );
+//   };
+
+//   const total = billItems.reduce((sum, it) => sum + it.rate * it.quantity, 0);
+
+//   const handleAddNewParty = async () => {
+//     if (!newPartyName.trim() || !newPartyPhone.trim()) {
+//       alert("Please enter name and phone");
+//       return;
+//     }
+
+//     try {
+//       const res = await fetch("/api/parties", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ name: newPartyName, phone: newPartyPhone }),
+//       });
+//       const data = await res.json();
+//       if (res.ok) {
+//         setParties([...parties, data]);
+//         setSelectedParty(data.id);
+//         setNewPartyName("");
+//         setNewPartyPhone("");
+//         alert("✅ Customer added!");
+//       } else {
+//         alert(data?.error || "Failed to add customer");
+//       }
+//     } catch (err) {
+//       console.error("Add party failed", err);
+//       alert("❌ Failed to add customer. Check console.");
+//     }
+//   };
+
+//   const handleGenerateBill = async () => {
+//     if (!user?.id) return alert("User not authenticated!");
+//     if (!selectedParty) return alert("Please select a customer!");
+//     if (!billItems.length) return alert("Add at least one item!");
+
+//     setLoading(true);
+//     const party = parties.find((p) => p.id === selectedParty);
+
+//     try {
+//       const products = billItems.map((i) => ({
+//         productId: i.id,
+//         quantity: i.quantity,
+//         price: i.rate,
+//         total: i.rate * i.quantity,
+//       }));
+
+//       // Remove any products with missing productId to avoid Prisma null errors
+//       const validProducts = products.filter(p => p.productId);
+
+//       const res = await fetch("/api/billing", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           userClerkId: user.id,
+//           customerId: party?.id,
+//           companyName,
+//           companyAddress,
+//           companyPhone,
+//           contactPerson,
+//           logoUrl: companyLogo,
+//           signatureUrl: companySignature,
+//           websiteUrl: companyWebsite,
+//           products: validProducts,
+//           total,
+//         }),
+//       });
+
+//       const data = await res.json();
+
+//       if (res.ok) {
+//         alert("✅ Bill saved successfully!");
+//         setBillItems([]);
+//         localStorage.removeItem("pendingCart");
+//         localStorage.removeItem("pendingTotal");
+//       } else {
+//         alert(data?.error || "❌ Failed to save bill.");
+//       }
+//     } catch (err) {
+//       console.error("Bill generation failed", err);
+//       alert("❌ Failed to save bill. Check console.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handlePrint = () => window.print();
+
+//   if (loadingProfile) return <p className="p-6">Loading business profile...</p>;
+
+//   return (
+//     <div className="p-6 max-w-3xl mx-auto bg-white rounded-lg shadow">
+//       <h1 className="text-3xl font-bold text-center mb-6">🧾 Billing System</h1>
+
+//       {/* Company Info */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🏢 Company Info</h2>
+//         {companyLogo && <img src={companyLogo} alt="Logo" className="w-32 h-32 object-contain mb-2" />}
+//         <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Name" />
+//         <input value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Address" />
+//         <input value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Phone" />
+//         <input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} className="border p-2 w-full rounded" placeholder="Contact Person" />
+//         <input value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className="border p-2 w-full rounded" placeholder="Website URL" />
+//       </div>
+
+//       {/* Party Selector */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">👤 Select or Add Customer</h2>
+//         <select className="border p-2 rounded w-full" value={selectedParty} onChange={(e) => setSelectedParty(e.target.value)}>
+//           <option value="">Select Customer</option>
+//           {parties.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.phone})</option>)}
+//         </select>
+//         <div className="flex gap-2 mt-2">
+//           <input className="border p-2 flex-1 rounded" placeholder="New Customer Name" value={newPartyName} onChange={(e) => setNewPartyName(e.target.value)} />
+//           <input className="border p-2 flex-1 rounded" placeholder="Phone" value={newPartyPhone} onChange={(e) => setNewPartyPhone(e.target.value)} />
+//           <button onClick={handleAddNewParty} className="bg-blue-600 text-white px-4 py-2 rounded">➕ Add</button>
+//         </div>
+//       </div>
+
+//       {/* Items */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🛒 Select Items</h2>
+//         {items.map((item) => {
+//           const inCart = billItems.find((i) => i.id === item.id)?.quantity || 0;
+//           return (
+//             <div key={item.id} className="flex justify-between border-b py-2 items-center">
+//               <div>
+//                 <span className="font-medium">{item.itemName}</span>
+//                 <span className="text-sm text-gray-500 ml-2">₹{item.rate}</span>
+//               </div>
+//               <button onClick={() => handleAddItem(item)} className="bg-green-500 text-white px-3 py-1 rounded">Add</button>
+//               {inCart > 0 && <span className="ml-2 font-semibold text-green-600">{inCart}</span>}
+//             </div>
+//           );
+//         })}
+//       </div>
+
+//       {/* Bill Summary */}
+//       <div className="space-y-2 mb-6 border-t pt-4">
+//         <h2 className="font-semibold">📋 Bill Summary</h2>
+//         {billItems.map((bi) => (
+//           <div key={bi.id} className="flex justify-between items-center border-b py-2">
+//             <span>{bi.itemName}</span>
+//             <div className="flex items-center gap-2">
+//               <input type="number" value={bi.quantity} min="1" onChange={(e) => handleQuantityChange(bi.id, parseInt(e.target.value))} className="w-16 border p-1 rounded text-center" />
+//               <span>₹{bi.rate * bi.quantity}</span>
+//             </div>
+//           </div>
+//         ))}
+//         <div className="font-bold text-right mt-2">Total: ₹{total}</div>
+//       </div>
+
+//       {/* Actions */}
+//       <div className="flex gap-3 justify-end">
+//         <button onClick={handleGenerateBill} disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded">
+//           💾 {loading ? "Saving..." : "Generate Bill"}
+//         </button>
+//         <button onClick={handlePrint} className="bg-gray-700 text-white px-4 py-2 rounded">🖨️ Print</button>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+// "use client";
+
+// import React, { useEffect, useState } from "react";
+// import { useUser } from "@clerk/nextjs";
+
+// interface BillItem {
+//   id: string;
+//   itemName: string;
+//   rate: number;
+//   quantity: number;
+// }
+
+// interface SavedBill {
+//   id: string;
+//   customerName: string;
+//   grandTotal: number;
+//   createdAt: string;
+// }
+
+// export default function BillingPage() {
+//   const { user } = useUser();
+//   const [companyName, setCompanyName] = useState("My Billing Firm");
+//   const [companyAddress, setCompanyAddress] = useState("123 Market Road, Delhi");
+//   const [companyPhone, setCompanyPhone] = useState("9876543210");
+//   const [contactPerson, setContactPerson] = useState("");
+//   const [companyLogo, setCompanyLogo] = useState("");
+//   const [companySignature, setCompanySignature] = useState("");
+//   const [companyWebsite, setCompanyWebsite] = useState("");
+
+//   const [parties, setParties] = useState<any[]>([]);
+//   const [items, setItems] = useState<any[]>([]);
+//   const [savedBills, setSavedBills] = useState<SavedBill[]>([]);
+//   const [selectedParty, setSelectedParty] = useState("");
+//   const [newPartyName, setNewPartyName] = useState("");
+//   const [newPartyPhone, setNewPartyPhone] = useState("");
+//   const [billItems, setBillItems] = useState<BillItem[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const [loadingProfile, setLoadingProfile] = useState(true);
+
+//   const fetchJson = async (url: string) => {
+//     try {
+//       const res = await fetch(url);
+//       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+//       return res.json();
+//     } catch (err) {
+//       console.error("Failed to fetch JSON from", url, err);
+//       return null;
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchJson("/api/profile/recent").then((data) => {
+//       if (data) {
+//         setCompanyName(data.businessName || "");
+//         setCompanyAddress(
+//           `${data.contactPersonName || ""}, ${data.contactPersonEmail || ""}, ${data.contactPersonPhone || ""}`
+//         );
+//         setCompanyPhone(data.contactPersonPhone || "");
+//         setContactPerson(data.contactPersonName || "");
+//         setCompanyLogo(data.logoUrl || "");
+//         setCompanySignature(data.signatureUrl || "");
+//         setCompanyWebsite(data.websiteUrl || "");
+//       }
+//       setLoadingProfile(false);
+//     });
+//   }, []);
+
+//   useEffect(() => {
+//     fetchJson("/api/parties").then((data) => data && setParties(data));
+//     fetchJson("/api/items").then((data) => data && setItems(data));
+//     fetchJson("/api/billing/list").then((data) => data && setSavedBills(data)); // Fetch saved bills
+
+//     const pendingCart = localStorage.getItem("pendingCart");
+//     if (pendingCart) {
+//       try {
+//         const cartItems = JSON.parse(pendingCart) as Record<string, any>;
+//         const itemsArray = Object.values(cartItems)
+//           .filter((item) => item.id && item.name)
+//           .map((item) => ({
+//             id: item.id,
+//             itemName: item.name,
+//             rate: item.price ?? 0,
+//             quantity: item.quantity ?? 1,
+//           }));
+//         setBillItems(itemsArray);
+//       } catch (err) {
+//         console.error("Failed to parse pendingCart", err);
+//       }
+//     }
+//   }, []);
+
+//   const handleAddItem = (item: any) => {
+//     const existing = billItems.find((i) => i.id === item.id);
+//     if (existing) {
+//       setBillItems(
+//         billItems.map((i) =>
+//           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+//         )
+//       );
+//     } else {
+//       setBillItems([...billItems, { ...item, quantity: 1 }]);
+//     }
+//   };
+
+//   const handleQuantityChange = (id: string, qty: number) => {
+//     setBillItems(
+//       billItems.map((i) =>
+//         i.id === id ? { ...i, quantity: Math.max(1, qty) } : i
+//       )
+//     );
+//   };
+
+//   const total = billItems.reduce((sum, it) => sum + it.rate * it.quantity, 0);
+
+//   const handleAddNewParty = async () => {
+//     if (!newPartyName.trim() || !newPartyPhone.trim()) {
+//       alert("Please enter name and phone");
+//       return;
+//     }
+
+//     try {
+//       const res = await fetch("/api/parties", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ name: newPartyName, phone: newPartyPhone }),
+//       });
+//       const data = await res.json();
+//       if (res.ok) {
+//         setParties([...parties, data]);
+//         setSelectedParty(data.id);
+//         setNewPartyName("");
+//         setNewPartyPhone("");
+//         alert("✅ Customer added!");
+//       } else {
+//         alert(data?.error || "Failed to add customer");
+//       }
+//     } catch (err) {
+//       console.error("Add party failed", err);
+//       alert("❌ Failed to add customer. Check console.");
+//     }
+//   };
+
+//   const handleGenerateBill = async () => {
+//     if (!user?.id) return alert("User not authenticated!");
+//     if (!selectedParty) return alert("Please select a customer!");
+//     if (!billItems.length) return alert("Add at least one item!");
+
+//     setLoading(true);
+//     const party = parties.find((p) => p.id === selectedParty);
+
+//     try {
+//       const products = billItems.map((i) => ({
+//         productId: i.id,
+//         quantity: i.quantity,
+//         price: i.rate,
+//         total: i.rate * i.quantity,
+//       }));
+
+//       const validProducts = products.filter((p) => p.productId);
+
+//       const res = await fetch("/api/billing", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           userClerkId: user.id,
+//           customerId: party?.id,
+//           companyName,
+//           companyAddress,
+//           companyPhone,
+//           contactPerson,
+//           logoUrl: companyLogo,
+//           signatureUrl: companySignature,
+//           websiteUrl: companyWebsite,
+//           products: validProducts,
+//           total,
+//         }),
+//       });
+
+//       const data = await res.json();
+
+//       if (res.ok) {
+//         alert("✅ Bill saved successfully!");
+//         setBillItems([]);
+//         localStorage.removeItem("pendingCart");
+//         localStorage.removeItem("pendingTotal");
+
+//         // Refresh saved bills list
+//         setSavedBills((prev) => [...prev, {
+//           id: data.id,
+//           customerName: party?.name || "",
+//           grandTotal: total,
+//           createdAt: new Date().toISOString(),
+//         }]);
+//       } else {
+//         alert(data?.error || "❌ Failed to save bill.");
+//       }
+//     } catch (err) {
+//       console.error("Bill generation failed", err);
+//       alert("❌ Failed to save bill. Check console.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handlePrint = () => window.print();
+
+//   if (loadingProfile) return <p className="p-6">Loading business profile...</p>;
+
+//   return (
+//     <div className="p-6 max-w-3xl mx-auto bg-white rounded-lg shadow">
+//       <h1 className="text-3xl font-bold text-center mb-6">🧾 Billing System</h1>
+
+//       {/* Company Info */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🏢 Company Info</h2>
+//         {companyLogo && <img src={companyLogo} alt="Logo" className="w-32 h-32 object-contain mb-2" />}
+//         <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Name" />
+//         <input value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Address" />
+//         <input value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Phone" />
+//         <input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} className="border p-2 w-full rounded" placeholder="Contact Person" />
+//         <input value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className="border p-2 w-full rounded" placeholder="Website URL" />
+//       </div>
+
+//       {/* Party Selector */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">👤 Select or Add Customer</h2>
+//         <select className="border p-2 rounded w-full" value={selectedParty} onChange={(e) => setSelectedParty(e.target.value)}>
+//           <option value="">Select Customer</option>
+//           {parties.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.phone})</option>)}
+//         </select>
+//         <div className="flex gap-2 mt-2">
+//           <input className="border p-2 flex-1 rounded" placeholder="New Customer Name" value={newPartyName} onChange={(e) => setNewPartyName(e.target.value)} />
+//           <input className="border p-2 flex-1 rounded" placeholder="Phone" value={newPartyPhone} onChange={(e) => setNewPartyPhone(e.target.value)} />
+//           <button onClick={handleAddNewParty} className="bg-blue-600 text-white px-4 py-2 rounded">➕ Add</button>
+//         </div>
+//       </div>
+
+//       {/* Items */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🛒 Select Items</h2>
+//         {items.map((item) => {
+//           const inCart = billItems.find((i) => i.id === item.id)?.quantity || 0;
+//           return (
+//             <div key={item.id} className="flex justify-between border-b py-2 items-center">
+//               <div>
+//                 <span className="font-medium">{item.itemName}</span>
+//                 <span className="text-sm text-gray-500 ml-2">₹{item.rate}</span>
+//               </div>
+//               <button onClick={() => handleAddItem(item)} className="bg-green-500 text-white px-3 py-1 rounded">Add</button>
+//               {inCart > 0 && <span className="ml-2 font-semibold text-green-600">{inCart}</span>}
+//             </div>
+//           );
+//         })}
+//       </div>
+
+//       {/* Bill Summary */}
+//       <div className="space-y-2 mb-6 border-t pt-4">
+//         <h2 className="font-semibold">📋 Bill Summary</h2>
+//         {billItems.map((bi) => (
+//           <div key={bi.id} className="flex justify-between items-center border-b py-2">
+//             <span>{bi.itemName}</span>
+//             <div className="flex items-center gap-2">
+//               <input type="number" value={bi.quantity} min={1} onChange={(e) => handleQuantityChange(bi.id, parseInt(e.target.value))} className="w-16 border p-1 rounded text-center" />
+//               <span>₹{bi.rate * bi.quantity}</span>
+//             </div>
+//           </div>
+//         ))}
+//         <div className="font-bold text-right mt-2">Total: ₹{total}</div>
+//       </div>
+
+//       {/* Actions */}
+//       <div className="flex gap-3 justify-end mb-6">
+//         <button onClick={handleGenerateBill} disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded">
+//           💾 {loading ? "Saving..." : "Generate Bill"}
+//         </button>
+//         <button onClick={handlePrint} className="bg-gray-700 text-white px-4 py-2 rounded">🖨️ Print</button>
+//       </div>
+
+//       {/* Saved Bills */}
+//       <div className="space-y-2 mt-8">
+//         <h2 className="font-semibold">📄 Saved Bills</h2>
+//         <table className="w-full border">
+//           <thead>
+//             <tr className="bg-gray-100">
+//               <th className="border px-2 py-1">Customer</th>
+//               <th className="border px-2 py-1">Total</th>
+//               <th className="border px-2 py-1">Date</th>
+//               <th className="border px-2 py-1">Action</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {savedBills.map((bill) => (
+//               <tr key={bill.id}>
+//                 <td className="border px-2 py-1">{bill.customerName}</td>
+//                 <td className="border px-2 py-1">₹{bill.grandTotal}</td>
+//                 <td className="border px-2 py-1">{new Date(bill.createdAt).toLocaleDateString()}</td>
+//                 <td className="border px-2 py-1">
+//                   <a href={`/billing/${bill.id}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+//                     View / Print
+//                   </a>
+//                 </td>
+//               </tr>
+//             ))}
+//             {savedBills.length === 0 && (
+//               <tr>
+//                 <td colSpan={4} className="text-center py-2 text-gray-500">No bills yet</td>
+//               </tr>
+//             )}
+//           </tbody>
+//         </table>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+
+// "use client";
+
+// import React, { useEffect, useState } from "react";
+// import { useUser } from "@clerk/nextjs";
+
+// interface BillItem {
+//   id: string;
+//   itemName: string;
+//   rate: number;
+//   quantity: number;
+// }
+
+// interface SavedBill {
+//   id: string;
+//   customerName: string;
+//   grandTotal: number;
+//   createdAt: string;
+// }
+
+// export default function BillingPage() {
+//   const { user } = useUser();
+
+//   const [companyName, setCompanyName] = useState("My Billing Firm");
+//   const [companyAddress, setCompanyAddress] = useState("123 Market Road, Delhi");
+//   const [companyPhone, setCompanyPhone] = useState("9876543210");
+//   const [contactPerson, setContactPerson] = useState("");
+//   const [companyLogo, setCompanyLogo] = useState("");
+//   const [companySignature, setCompanySignature] = useState("");
+//   const [companyWebsite, setCompanyWebsite] = useState("");
+
+//   const [parties, setParties] = useState<any[]>([]);
+//   const [items, setItems] = useState<any[]>([]);
+//   const [savedBills, setSavedBills] = useState<SavedBill[]>([]);
+//   const [selectedParty, setSelectedParty] = useState("");
+//   const [newPartyName, setNewPartyName] = useState("");
+//   const [newPartyPhone, setNewPartyPhone] = useState("");
+//   const [billItems, setBillItems] = useState<BillItem[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const [loadingProfile, setLoadingProfile] = useState(true);
+
+//   // ✅ Helper fetch wrapper
+//   const fetchJson = async (url: string) => {
+//     try {
+//       const res = await fetch(url);
+//       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+//       return res.json();
+//     } catch (err) {
+//       console.error("Failed to fetch JSON from", url, err);
+//       return null;
+//     }
+//   };
+
+//   // ✅ Load company profile
+//   useEffect(() => {
+//     fetchJson("/api/profile/recent").then((data) => {
+//       if (data) {
+//         setCompanyName(data.businessName || "");
+//         setCompanyAddress(
+//           `${data.contactPersonName || ""}, ${data.contactPersonEmail || ""}, ${data.contactPersonPhone || ""}`
+//         );
+//         setCompanyPhone(data.contactPersonPhone || "");
+//         setContactPerson(data.contactPersonName || "");
+//         setCompanyLogo(data.logoUrl || "");
+//         setCompanySignature(data.signatureUrl || "");
+//         setCompanyWebsite(data.websiteUrl || "");
+//       }
+//       setLoadingProfile(false);
+//     });
+//   }, []);
+
+//   // ✅ Load parties, items, and saved bills
+//   useEffect(() => {
+//     fetchJson("/api/parties").then((data) => data && setParties(data));
+//     fetchJson("/api/items").then((data) => data && setItems(data));
+//     fetchJson("/api/billing/list").then((data) => {
+//       if (Array.isArray(data)) {
+//         // API returns an array of bills directly
+//         const formatted = data.map((b: any) => ({
+//           id: b.id,
+//           customerName: b.customer?.name || "Unknown",
+//           grandTotal: b.grandTotal ?? b.total ?? 0,
+//           createdAt: b.createdAt,
+//         }));
+//         setSavedBills(formatted);
+//       } else {
+//         console.error("Unexpected /api/billing/list format:", data);
+//       }
+//     });
+
+//     // ✅ Restore draft bill from localStorage
+//     const pendingCart = localStorage.getItem("pendingCart");
+//     if (pendingCart) {
+//       try {
+//         const cartItems = JSON.parse(pendingCart) as Record<string, any>;
+//         const itemsArray = Object.values(cartItems)
+//           .filter((item: any) => item.id && item.name)
+//           .map((item: any) => ({
+//             id: item.id,
+//             itemName: item.name,
+//             rate: item.price ?? 0,
+//             quantity: item.quantity ?? 1,
+//           }));
+//         setBillItems(itemsArray);
+//       } catch (err) {
+//         console.error("Failed to parse pendingCart", err);
+//       }
+//     }
+//   }, []);
+
+//   // ✅ Add item to current bill
+//   const handleAddItem = (item: any) => {
+//     const existing = billItems.find((i) => i.id === item.id);
+//     if (existing) {
+//       setBillItems(
+//         billItems.map((i) =>
+//           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+//         )
+//       );
+//     } else {
+//       setBillItems([...billItems, { ...item, quantity: 1 }]);
+//     }
+//   };
+
+//   // ✅ Change quantity
+//   const handleQuantityChange = (id: string, qty: number) => {
+//     setBillItems(
+//       billItems.map((i) =>
+//         i.id === id ? { ...i, quantity: Math.max(1, qty) } : i
+//       )
+//     );
+//   };
+
+//   const total = billItems.reduce((sum, it) => sum + it.rate * it.quantity, 0);
+
+//   // ✅ Add new customer
+//   const handleAddNewParty = async () => {
+//     if (!newPartyName.trim() || !newPartyPhone.trim()) {
+//       alert("Please enter name and phone");
+//       return;
+//     }
+
+//     try {
+//       const res = await fetch("/api/parties", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ name: newPartyName, phone: newPartyPhone }),
+//       });
+//       const data = await res.json();
+//       if (res.ok) {
+//         setParties([...parties, data]);
+//         setSelectedParty(data.id);
+//         setNewPartyName("");
+//         setNewPartyPhone("");
+//         alert("✅ Customer added!");
+//       } else {
+//         alert(data?.error || "Failed to add customer");
+//       }
+//     } catch (err) {
+//       console.error("Add party failed", err);
+//       alert("❌ Failed to add customer. Check console.");
+//     }
+//   };
+
+//   // ✅ Generate bill
+
+
+
+
+
+
+// const handleGenerateBill = async () => {
+//   if (!user?.id) return alert("User not authenticated!");
+//   if (!selectedParty) return alert("Please select a customer!");
+//   if (!billItems.length) return alert("Add at least one item!");
+
+//   setLoading(true);
+//   const party = parties.find((p) => p.id === selectedParty);
+
+//   try {
+//     const products = billItems.map((i) => ({
+//       productId: i.id,
+//       productName: i.itemName, // ✅ Save the item name here
+//       quantity: i.quantity,
+//       price: i.rate,
+//       total: i.rate * i.quantity,
+//     }));
+
+//     const validProducts = products.filter((p) => p.productId);
+
+//     const res = await fetch("/api/billing", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({
+//         userClerkId: user.id,
+//         customerId: party?.id,
+//         companyName,
+//         companyAddress,
+//         companyPhone,
+//         contactPerson,
+//         logoUrl: companyLogo,
+//         signatureUrl: companySignature,
+//         websiteUrl: companyWebsite,
+//         products: validProducts,
+//         total,
+//       }),
+//     });
+
+//     const data = await res.json();
+
+//     if (res.ok) {
+//       alert("✅ Bill saved successfully!");
+//       setBillItems([]);
+//       localStorage.removeItem("pendingCart");
+//       localStorage.removeItem("pendingTotal");
+
+//       // ✅ Append new bill to savedBills
+//       setSavedBills((prev) => [
+//         ...prev,
+//         {
+//           id: data.id,
+//           customerName: party?.name || "",
+//           grandTotal: total,
+//           createdAt: new Date().toISOString(),
+//         },
+//       ]);
+//     } else {
+//       alert(data?.error || "❌ Failed to save bill.");
+//     }
+//   } catch (err) {
+//     console.error("Bill generation failed", err);
+//     alert("❌ Failed to save bill. Check console.");
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+
+
+
+
+
+//   const handlePrint = () => window.print();
+
+//   if (loadingProfile)
+//     return <p className="p-6 text-center">Loading business profile...</p>;
+
+//   return (
+//     <div className="p-6 max-w-3xl mx-auto bg-white rounded-lg shadow">
+//       <h1 className="text-3xl font-bold text-center mb-6">🧾 Billing System</h1>
+
+//       {/* Company Info */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🏢 Company Info</h2>
+//         {companyLogo && (
+//           <img
+//             src={companyLogo}
+//             alt="Logo"
+//             className="w-32 h-32 object-contain mb-2"
+//           />
+//         )}
+//         <input
+//           value={companyName}
+//           onChange={(e) => setCompanyName(e.target.value)}
+//           className="border p-2 w-full rounded"
+//           placeholder="Company Name"
+//         />
+//         <input
+//           value={companyAddress}
+//           onChange={(e) => setCompanyAddress(e.target.value)}
+//           className="border p-2 w-full rounded"
+//           placeholder="Company Address"
+//         />
+//         <input
+//           value={companyPhone}
+//           onChange={(e) => setCompanyPhone(e.target.value)}
+//           className="border p-2 w-full rounded"
+//           placeholder="Company Phone"
+//         />
+//         <input
+//           value={contactPerson}
+//           onChange={(e) => setContactPerson(e.target.value)}
+//           className="border p-2 w-full rounded"
+//           placeholder="Contact Person"
+//         />
+//         <input
+//           value={companyWebsite}
+//           onChange={(e) => setCompanyWebsite(e.target.value)}
+//           className="border p-2 w-full rounded"
+//           placeholder="Website URL"
+//         />
+//       </div>
+
+//       {/* Party Selector */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">👤 Select or Add Customer</h2>
+//         <select
+//           className="border p-2 rounded w-full"
+//           value={selectedParty}
+//           onChange={(e) => setSelectedParty(e.target.value)}
+//         >
+//           <option value="">Select Customer</option>
+//           {parties.map((p) => (
+//             <option key={p.id} value={p.id}>
+//               {p.name} ({p.phone})
+//             </option>
+//           ))}
+//         </select>
+//         <div className="flex gap-2 mt-2">
+//           <input
+//             className="border p-2 flex-1 rounded"
+//             placeholder="New Customer Name"
+//             value={newPartyName}
+//             onChange={(e) => setNewPartyName(e.target.value)}
+//           />
+//           <input
+//             className="border p-2 flex-1 rounded"
+//             placeholder="Phone"
+//             value={newPartyPhone}
+//             onChange={(e) => setNewPartyPhone(e.target.value)}
+//           />
+//           <button
+//             onClick={handleAddNewParty}
+//             className="bg-blue-600 text-white px-4 py-2 rounded"
+//           >
+//             ➕ Add
+//           </button>
+//         </div>
+//       </div>
+
+//       {/* Items */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🛒 Select Items</h2>
+//         {items.map((item) => {
+//           const inCart = billItems.find((i) => i.id === item.id)?.quantity || 0;
+//           return (
+//             <div
+//               key={item.id}
+//               className="flex justify-between border-b py-2 items-center"
+//             >
+//               <div>
+//                 <span className="font-medium">{item.itemName}</span>
+//                 <span className="text-sm text-gray-500 ml-2">₹{item.rate}</span>
+//               </div>
+//               <button
+//                 onClick={() => handleAddItem(item)}
+//                 className="bg-green-500 text-white px-3 py-1 rounded"
+//               >
+//                 Add
+//               </button>
+//               {inCart > 0 && (
+//                 <span className="ml-2 font-semibold text-green-600">
+//                   {inCart}
+//                 </span>
+//               )}
+//             </div>
+//           );
+//         })}
+//       </div>
+
+//       {/* Bill Summary */}
+//       <div className="space-y-2 mb-6 border-t pt-4">
+//         <h2 className="font-semibold">📋 Bill Summary</h2>
+//         {billItems.map((bi) => (
+//           <div
+//             key={bi.id}
+//             className="flex justify-between items-center border-b py-2"
+//           >
+//             <span>{bi.itemName}</span>
+//             <div className="flex items-center gap-2">
+//               <input
+//                 type="number"
+//                 value={bi.quantity}
+//                 min={1}
+//                 onChange={(e) =>
+//                   handleQuantityChange(bi.id, parseInt(e.target.value))
+//                 }
+//                 className="w-16 border p-1 rounded text-center"
+//               />
+//               <span>₹{bi.rate * bi.quantity}</span>
+//             </div>
+//           </div>
+//         ))}
+//         <div className="font-bold text-right mt-2">Total: ₹{total}</div>
+//       </div>
+
+//       {/* Actions */}
+//       <div className="flex gap-3 justify-end mb-6">
+//         <button
+//           onClick={handleGenerateBill}
+//           disabled={loading}
+//           className="bg-indigo-600 text-white px-4 py-2 rounded"
+//         >
+//           💾 {loading ? "Saving..." : "Generate Bill"}
+//         </button>
+//         <button
+//           onClick={handlePrint}
+//           className="bg-gray-700 text-white px-4 py-2 rounded"
+//         >
+//           🖨️ Print
+//         </button>
+//       </div>
+
+//       {/* Saved Bills */}
+//       <div className="space-y-2 mt-8">
+//         <h2 className="font-semibold">📄 Saved Bills</h2>
+//         <table className="w-full border text-sm">
+//           <thead>
+//             <tr className="bg-gray-100">
+//               <th className="border px-2 py-1">Customer</th>
+//               <th className="border px-2 py-1">Total</th>
+//               <th className="border px-2 py-1">Date</th>
+//               <th className="border px-2 py-1">Action</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {savedBills.map((bill) => (
+//               <tr key={bill.id}>
+//                 <td className="border px-2 py-1">{bill.customerName}</td>
+//                 <td className="border px-2 py-1">₹{bill.grandTotal}</td>
+//                 <td className="border px-2 py-1">
+//                   {new Date(bill.createdAt).toLocaleDateString()}
+//                 </td>
+//                 <td className="border px-2 py-1 text-center">
+//                   <a
+//                     href={`/billing/view//${bill.id}`}
+//                     target="_blank"
+//                     rel="noopener noreferrer"
+//                     className="text-blue-600 underline"
+//                   >
+//                     View / Print
+//                   </a>
+//                 </td>
+//               </tr>
+//             ))}
+//             {savedBills.length === 0 && (
+//               <tr>
+//                 <td
+//                   colSpan={4}
+//                   className="text-center py-2 text-gray-500"
+//                 >
+//                   No bills yet
+//                 </td>
+//               </tr>
+//             )}
+//           </tbody>
+//         </table>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// "use client";
+
+// import React, { useEffect, useState } from "react";
+// import { useUser } from "@clerk/nextjs";
+// import PartySelector from "./PartySelector"; // ✅ Import the new component
+
+// interface BillItem {
+//   id: string;
+//   itemName: string;
+//   rate: number;
+//   quantity: number;
+// }
+
+// interface SavedBill {
+//   id: string;
+//   customerName: string;
+//   grandTotal: number;
+//   createdAt: string;
+// }
+
+// export default function BillingPage() {
+//   const { user } = useUser();
+
+//   const [companyName, setCompanyName] = useState("My Billing Firm");
+//   const [companyAddress, setCompanyAddress] = useState("123 Market Road, Delhi");
+//   const [companyPhone, setCompanyPhone] = useState("9876543210");
+//   const [contactPerson, setContactPerson] = useState("");
+//   const [companyLogo, setCompanyLogo] = useState("");
+//   const [companySignature, setCompanySignature] = useState("");
+//   const [companyWebsite, setCompanyWebsite] = useState("");
+
+//   const [parties, setParties] = useState<any[]>([]);
+//   const [items, setItems] = useState<any[]>([]);
+//   const [savedBills, setSavedBills] = useState<SavedBill[]>([]);
+//   const [selectedParty, setSelectedParty] = useState("");
+//   const [billItems, setBillItems] = useState<BillItem[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const [loadingProfile, setLoadingProfile] = useState(true);
+
+//   const fetchJson = async (url: string) => {
+//     try {
+//       const res = await fetch(url);
+//       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+//       return res.json();
+//     } catch (err) {
+//       console.error("Failed to fetch JSON from", url, err);
+//       return null;
+//     }
+//   };
+
+//   // Load company profile
+//   useEffect(() => {
+//     fetchJson("/api/profile/recent").then((data) => {
+//       if (data) {
+//         setCompanyName(data.businessName || "");
+//         setCompanyAddress(
+//           `${data.contactPersonName || ""}, ${data.contactPersonEmail || ""}, ${data.contactPersonPhone || ""}`
+//         );
+//         setCompanyPhone(data.contactPersonPhone || "");
+//         setContactPerson(data.contactPersonName || "");
+//         setCompanyLogo(data.logoUrl || "");
+//         setCompanySignature(data.signatureUrl || "");
+//         setCompanyWebsite(data.websiteUrl || "");
+//       }
+//       setLoadingProfile(false);
+//     });
+//   }, []);
+
+//   // Load parties, items, and saved bills
+//   useEffect(() => {
+//     fetchJson("/api/parties").then((data) => data && setParties(data));
+//     fetchJson("/api/items").then((data) => data && setItems(data));
+//     fetchJson("/api/billing/list").then((data) => {
+//       if (Array.isArray(data)) {
+//         const formatted = data.map((b: any) => ({
+//           id: b.id,
+//           customerName: b.customer?.name || "Unknown",
+//           grandTotal: b.grandTotal ?? b.total ?? 0,
+//           createdAt: b.createdAt,
+//         }));
+//         setSavedBills(formatted);
+//       }
+//     });
+
+//     const pendingCart = localStorage.getItem("pendingCart");
+//     if (pendingCart) {
+//       try {
+//         const cartItems = JSON.parse(pendingCart) as Record<string, any>;
+//         const itemsArray = Object.values(cartItems)
+//           .filter((item: any) => item.id && item.name)
+//           .map((item: any) => ({
+//             id: item.id,
+//             itemName: item.name,
+//             rate: item.price ?? 0,
+//             quantity: item.quantity ?? 1,
+//           }));
+//         setBillItems(itemsArray);
+//       } catch (err) {
+//         console.error("Failed to parse pendingCart", err);
+//       }
+//     }
+//   }, []);
+
+//   const handleAddItem = (item: any) => {
+//     const existing = billItems.find((i) => i.id === item.id);
+//     if (existing) {
+//       setBillItems(
+//         billItems.map((i) =>
+//           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+//         )
+//       );
+//     } else {
+//       setBillItems([...billItems, { ...item, quantity: 1 }]);
+//     }
+//   };
+
+//   const handleQuantityChange = (id: string, qty: number) => {
+//     setBillItems(
+//       billItems.map((i) =>
+//         i.id === id ? { ...i, quantity: Math.max(1, qty) } : i
+//       )
+//     );
+//   };
+
+//   const total = billItems.reduce((sum, it) => sum + it.rate * it.quantity, 0);
+
+//   const handleGenerateBill = async () => {
+//     if (!user?.id) return alert("User not authenticated!");
+//     if (!selectedParty) return alert("Please select a customer!");
+//     if (!billItems.length) return alert("Add at least one item!");
+
+//     setLoading(true);
+//     const party = parties.find((p) => p.id === selectedParty);
+
+//     try {
+//       const products = billItems.map((i) => ({
+//         productId: i.id,
+//         productName: i.itemName,
+//         quantity: i.quantity,
+//         price: i.rate,
+//         total: i.rate * i.quantity,
+//       }));
+
+//       const validProducts = products.filter((p) => p.productId);
+
+//       const res = await fetch("/api/billing", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           userClerkId: user.id,
+//           customerId: party?.id,
+//           companyName,
+//           companyAddress,
+//           companyPhone,
+//           contactPerson,
+//           logoUrl: companyLogo,
+//           signatureUrl: companySignature,
+//           websiteUrl: companyWebsite,
+//           products: validProducts,
+//           total,
+//         }),
+//       });
+
+//       const data = await res.json();
+
+//       if (res.ok) {
+//         alert("✅ Bill saved successfully!");
+//         setBillItems([]);
+//         localStorage.removeItem("pendingCart");
+//         localStorage.removeItem("pendingTotal");
+
+//         setSavedBills((prev) => [
+//           ...prev,
+//           {
+//             id: data.id,
+//             customerName: party?.name || "",
+//             grandTotal: total,
+//             createdAt: new Date().toISOString(),
+//           },
+//         ]);
+//       } else {
+//         alert(data?.error || "❌ Failed to save bill.");
+//       }
+//     } catch (err) {
+//       console.error("Bill generation failed", err);
+//       alert("❌ Failed to save bill. Check console.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handlePrint = () => window.print();
+
+//   if (loadingProfile)
+//     return <p className="p-6 text-center">Loading business profile...</p>;
+
+//   return (
+//     <div className="p-6 max-w-3xl mx-auto bg-white rounded-lg shadow">
+//       <h1 className="text-3xl font-bold text-center mb-6">🧾 Billing System</h1>
+
+//       {/* Company Info */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🏢 Company Info</h2>
+//         {companyLogo && (
+//           <img
+//             src={companyLogo}
+//             alt="Logo"
+//             className="w-32 h-32 object-contain mb-2"
+//           />
+//         )}
+//         <input
+//           value={companyName}
+//           onChange={(e) => setCompanyName(e.target.value)}
+//           className="border p-2 w-full rounded"
+//           placeholder="Company Name"
+//         />
+//         <input
+//           value={companyAddress}
+//           onChange={(e) => setCompanyAddress(e.target.value)}
+//           className="border p-2 w-full rounded"
+//           placeholder="Company Address"
+//         />
+//         <input
+//           value={companyPhone}
+//           onChange={(e) => setCompanyPhone(e.target.value)}
+//           className="border p-2 w-full rounded"
+//           placeholder="Company Phone"
+//         />
+//         <input
+//           value={contactPerson}
+//           onChange={(e) => setContactPerson(e.target.value)}
+//           className="border p-2 w-full rounded"
+//           placeholder="Contact Person"
+//         />
+//         <input
+//           value={companyWebsite}
+//           onChange={(e) => setCompanyWebsite(e.target.value)}
+//           className="border p-2 w-full rounded"
+//           placeholder="Website URL"
+//         />
+//       </div>
+
+//       {/* Party Selector */}
+//       <PartySelector
+//         parties={parties}
+//         selectedParty={selectedParty}
+//         setSelectedParty={setSelectedParty}
+//         refreshParties={() => fetchJson("/api/parties").then((data) => data && setParties(data))}
+//       />
+
+//       {/* Items */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🛒 Select Items</h2>
+//         {items.map((item) => {
+//           const inCart = billItems.find((i) => i.id === item.id)?.quantity || 0;
+//           return (
+//             <div
+//               key={item.id}
+//               className="flex justify-between border-b py-2 items-center"
+//             >
+//               <div>
+//                 <span className="font-medium">{item.itemName}</span>
+//                 <span className="text-sm text-gray-500 ml-2">₹{item.rate}</span>
+//               </div>
+//               <button
+//                 onClick={() => handleAddItem(item)}
+//                 className="bg-green-500 text-white px-3 py-1 rounded"
+//               >
+//                 Add
+//               </button>
+//               {inCart > 0 && (
+//                 <span className="ml-2 font-semibold text-green-600">
+//                   {inCart}
+//                 </span>
+//               )}
+//             </div>
+//           );
+//         })}
+//       </div>
+
+//       {/* Bill Summary */}
+//       <div className="space-y-2 mb-6 border-t pt-4">
+//         <h2 className="font-semibold">📋 Bill Summary</h2>
+//         {billItems.map((bi) => (
+//           <div
+//             key={bi.id}
+//             className="flex justify-between items-center border-b py-2"
+//           >
+//             <span>{bi.itemName}</span>
+//             <div className="flex items-center gap-2">
+//               <input
+//                 type="number"
+//                 value={bi.quantity}
+//                 min={1}
+//                 onChange={(e) =>
+//                   handleQuantityChange(bi.id, parseInt(e.target.value))
+//                 }
+//                 className="w-16 border p-1 rounded text-center"
+//               />
+//               <span>₹{bi.rate * bi.quantity}</span>
+//             </div>
+//           </div>
+//         ))}
+//         <div className="font-bold text-right mt-2">Total: ₹{total}</div>
+//       </div>
+
+//       {/* Actions */}
+//       <div className="flex gap-3 justify-end mb-6">
+//         <button
+//           onClick={handleGenerateBill}
+//           disabled={loading}
+//           className="bg-indigo-600 text-white px-4 py-2 rounded"
+//         >
+//           💾 {loading ? "Saving..." : "Generate Bill"}
+//         </button>
+//         <button
+//           onClick={handlePrint}
+//           className="bg-gray-700 text-white px-4 py-2 rounded"
+//         >
+//           🖨️ Print
+//         </button>
+//       </div>
+
+//       {/* Saved Bills */}
+//       <div className="space-y-2 mt-8">
+//         <h2 className="font-semibold">📄 Saved Bills</h2>
+//         <table className="w-full border text-sm">
+//           <thead>
+//             <tr className="bg-gray-100">
+//               <th className="border px-2 py-1">Customer</th>
+//               <th className="border px-2 py-1">Total</th>
+//               <th className="border px-2 py-1">Date</th>
+//               <th className="border px-2 py-1">Action</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {savedBills.map((bill) => (
+//               <tr key={bill.id}>
+//                 <td className="border px-2 py-1">{bill.customerName}</td>
+//                 <td className="border px-2 py-1">₹{bill.grandTotal}</td>
+//                 <td className="border px-2 py-1">
+//                   {new Date(bill.createdAt).toLocaleDateString()}
+//                 </td>
+//                 <td className="border px-2 py-1 text-center">
+//                   <a
+//                     href={`/billing/view//${bill.id}`}
+//                     target="_blank"
+//                     rel="noopener noreferrer"
+//                     className="text-blue-600 underline"
+//                   >
+//                     View / Print
+//                   </a>
+//                 </td>
+//               </tr>
+//             ))}
+//             {savedBills.length === 0 && (
+//               <tr>
+//                 <td
+//                   colSpan={4}
+//                   className="text-center py-2 text-gray-500"
+//                 >
+//                   No bills yet
+//                 </td>
+//               </tr>
+//             )}
+//           </tbody>
+//         </table>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// "use client";
+
+// import React, { useEffect, useState } from "react";
+// import { useUser } from "@clerk/nextjs";
+// import PartySelector from "./PartySelector";
+
+// interface BillItem {
+//   id: string;
+//   itemName: string;
+//   rate: number;
+//   quantity: number;
+// }
+
+// interface SavedBill {
+//   id: string;
+//   customerName: string;
+//   grandTotal: number;
+//   createdAt: string;
+// }
+
+// export default function BillingPage() {
+//   const { user } = useUser();
+
+//   const [companyName, setCompanyName] = useState("My Billing Firm");
+//   const [companyAddress, setCompanyAddress] = useState("123 Market Road, Delhi");
+//   const [companyPhone, setCompanyPhone] = useState("9876543210");
+//   const [contactPerson, setContactPerson] = useState("");
+//   const [companyLogo, setCompanyLogo] = useState("");
+//   const [companySignature, setCompanySignature] = useState("");
+//   const [companyWebsite, setCompanyWebsite] = useState("");
+
+//   const [parties, setParties] = useState<any[]>([]);
+//   const [items, setItems] = useState<any[]>([]);
+//   const [savedBills, setSavedBills] = useState<SavedBill[]>([]);
+//   const [selectedParty, setSelectedParty] = useState("");
+//   const [billItems, setBillItems] = useState<BillItem[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const [loadingProfile, setLoadingProfile] = useState(true);
+
+//   const fetchJson = async (url: string) => {
+//     try {
+//       const res = await fetch(url);
+//       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+//       return res.json();
+//     } catch (err) {
+//       console.error("Failed to fetch JSON from", url, err);
+//       return null;
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchJson("/api/profile/recent").then((data) => {
+//       if (data) {
+//         setCompanyName(data.businessName || "");
+//         setCompanyAddress(
+//           `${data.contactPersonName || ""}, ${data.contactPersonEmail || ""}, ${data.contactPersonPhone || ""}`
+//         );
+//         setCompanyPhone(data.contactPersonPhone || "");
+//         setContactPerson(data.contactPersonName || "");
+//         setCompanyLogo(data.logoUrl || "");
+//         setCompanySignature(data.signatureUrl || "");
+//         setCompanyWebsite(data.websiteUrl || "");
+//       }
+//       setLoadingProfile(false);
+//     });
+//   }, []);
+
+//   useEffect(() => {
+//     fetchJson("/api/parties").then((data) => data && setParties(data));
+//     fetchJson("/api/items").then((data) => data && setItems(data));
+//     fetchJson("/api/billing/list").then((data) => {
+//       if (Array.isArray(data)) {
+//         const formatted = data.map((b: any) => ({
+//           id: b.id,
+//           customerName: b.customer?.name || "Unknown",
+//           grandTotal: b.grandTotal ?? b.total ?? 0,
+//           createdAt: b.createdAt,
+//         }));
+//         setSavedBills(formatted);
+//       }
+//     });
+
+//     const pendingCart = localStorage.getItem("pendingCart");
+//     if (pendingCart) {
+//       try {
+//         const cartItems = JSON.parse(pendingCart) as Record<string, any>;
+//         const itemsArray = Object.values(cartItems)
+//           .filter((item: any) => item.id && item.name)
+//           .map((item: any) => ({
+//             id: item.id,
+//             itemName: item.name,
+//             rate: item.price ?? 0,
+//             quantity: item.quantity ?? 1,
+//           }));
+//         setBillItems(itemsArray);
+//       } catch (err) {
+//         console.error("Failed to parse pendingCart", err);
+//       }
+//     }
+//   }, []);
+
+//   const handleAddItem = (item: any) => {
+//     const existing = billItems.find((i) => i.id === item.id);
+//     if (existing) {
+//       setBillItems(
+//         billItems.map((i) =>
+//           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+//         )
+//       );
+//     } else {
+//       setBillItems([...billItems, { ...item, quantity: 1 }]);
+//     }
+//   };
+
+//   const handleQuantityChange = (id: string, qty: number) => {
+//     setBillItems(
+//       billItems.map((i) =>
+//         i.id === id ? { ...i, quantity: Math.max(1, qty) } : i
+//       )
+//     );
+//   };
+
+//   const total = billItems.reduce((sum, it) => sum + it.rate * it.quantity, 0);
+
+//   const handleGenerateBill = async () => {
+//     if (!user?.id) return alert("User not authenticated!");
+//     if (!selectedParty) return alert("Please select a customer!");
+//     if (!billItems.length) return alert("Add at least one item!");
+
+//     setLoading(true);
+//     const party = parties.find((p) => p.id === selectedParty);
+
+//     try {
+//       const products = billItems.map((i) => ({
+//         productId: i.id,
+//         productName: i.itemName,
+//         quantity: i.quantity,
+//         price: i.rate,
+//         total: i.rate * i.quantity,
+//       }));
+
+//       const validProducts = products.filter((p) => p.productId);
+
+//       const res = await fetch("/api/billing", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           userClerkId: user.id,
+//           customerId: party?.id,
+//           companyName,
+//           companyAddress,
+//           companyPhone,
+//           contactPerson,
+//           logoUrl: companyLogo,
+//           signatureUrl: companySignature,
+//           websiteUrl: companyWebsite,
+//           products: validProducts,
+//           total,
+//         }),
+//       });
+
+//       const data = await res.json();
+
+//       if (res.ok) {
+//         alert("✅ Bill saved successfully!");
+//         setBillItems([]);
+//         localStorage.removeItem("pendingCart");
+//         localStorage.removeItem("pendingTotal");
+
+//         setSavedBills((prev) => [
+//           ...prev,
+//           {
+//             id: data.id,
+//             customerName: party?.name || "",
+//             grandTotal: total,
+//             createdAt: new Date().toISOString(),
+//           },
+//         ]);
+//       } else {
+//         alert(data?.error || "❌ Failed to save bill.");
+//       }
+//     } catch (err) {
+//       console.error("Bill generation failed", err);
+//       alert("❌ Failed to save bill. Check console.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handlePrint = () => window.print();
+
+//   if (loadingProfile)
+//     return <p className="p-6 text-center">Loading business profile...</p>;
+
+//   return (
+//     <div className="p-6 max-w-3xl mx-auto bg-white rounded-lg shadow">
+//       <h1 className="text-3xl font-bold text-center mb-6">🧾 Billing System</h1>
+
+//       {/* Company Info */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🏢 Company Info</h2>
+//         {companyLogo && <img src={companyLogo} alt="Logo" className="w-32 h-32 object-contain mb-2" />}
+//         <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Name" />
+//         <input value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Address" />
+//         <input value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Phone" />
+//         <input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} className="border p-2 w-full rounded" placeholder="Contact Person" />
+//         <input value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className="border p-2 w-full rounded" placeholder="Website URL" />
+//       </div>
+
+//       {/* Party Selector */}
+//       <PartySelector
+//         parties={parties}
+//         selectedParty={selectedParty}
+//         setSelectedParty={setSelectedParty}
+//         refreshParties={() => fetchJson("/api/parties").then((data) => data && setParties(data))}
+//       />
+
+//       {/* Items */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🛒 Select Items</h2>
+//         {items.map((item) => {
+//           const inCart = billItems.find((i) => i.id === item.id)?.quantity || 0;
+//           return (
+//             <div key={item.id} className="flex justify-between border-b py-2 items-center">
+//               <div>
+//                 <span className="font-medium">{item.itemName}</span>
+//                 <span className="text-sm text-gray-500 ml-2">₹{item.rate}</span>
+//               </div>
+//               <button onClick={() => handleAddItem(item)} className="bg-green-500 text-white px-3 py-1 rounded">
+//                 Add
+//               </button>
+//               {inCart > 0 && <span className="ml-2 font-semibold text-green-600">{inCart}</span>}
+//             </div>
+//           );
+//         })}
+//       </div>
+
+//       {/* Bill Summary */}
+//       <div className="space-y-2 mb-6 border-t pt-4">
+//         <h2 className="font-semibold">📋 Bill Summary</h2>
+//         {billItems.map((bi) => (
+//           <div key={bi.id} className="flex justify-between items-center border-b py-2">
+//             <span>{bi.itemName}</span>
+//             <div className="flex items-center gap-2">
+//               <input type="number" min={1} value={bi.quantity} onChange={(e) => handleQuantityChange(bi.id, parseInt(e.target.value))} className="w-16 border p-1 rounded text-center" />
+//               <span>₹{bi.rate * bi.quantity}</span>
+//             </div>
+//           </div>
+//         ))}
+//         <div className="font-bold text-right mt-2">Total: ₹{total}</div>
+//       </div>
+
+//       {/* Actions */}
+//       <div className="flex gap-3 justify-end mb-6">
+//         <button onClick={handleGenerateBill} disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded">
+//           💾 {loading ? "Saving..." : "Generate Bill"}
+//         </button>
+//         <button onClick={handlePrint} className="bg-gray-700 text-white px-4 py-2 rounded">
+//           🖨️ Print
+//         </button>
+//       </div>
+
+//       {/* Saved Bills */}
+//       <div className="space-y-2 mt-8">
+//         <h2 className="font-semibold">📄 Saved Bills</h2>
+//         <table className="w-full border text-sm">
+//           <thead>
+//             <tr className="bg-gray-100">
+//               <th className="border px-2 py-1">Customer</th>
+//               <th className="border px-2 py-1">Total</th>
+//               <th className="border px-2 py-1">Date</th>
+//               <th className="border px-2 py-1">Action</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {savedBills.length === 0 && (
+//               <tr>
+//                 <td colSpan={4} className="text-center py-2 text-gray-500">No bills yet</td>
+//               </tr>
+//             )}
+//             {savedBills.map((bill) => (
+//               <tr key={bill.id}>
+//                 <td className="border px-2 py-1">{bill.customerName}</td>
+//                 <td className="border px-2 py-1">₹{bill.grandTotal}</td>
+//                 <td className="border px-2 py-1">{new Date(bill.createdAt).toLocaleDateString()}</td>
+//                 <td className="border px-2 py-1 text-center">
+//                   <a href={`/billing/view/${bill.id}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View / Print</a>
+//                 </td>
+//               </tr>
+//             ))}
+//           </tbody>
+//         </table>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+// "use client";
+
+// import React, { useEffect, useState } from "react";
+// import { useUser } from "@clerk/nextjs";
+// import PartySelector from "./PartySelector";
+
+// interface BillItem {
+//   id: string;
+//   itemName: string;
+//   rate: number;
+//   quantity: number;
+// }
+
+// interface SavedBill {
+//   id: string;
+//   customerName: string;
+//   grandTotal: number;
+//   createdAt: string;
+// }
+
+// export default function BillingPage() {
+//   const { user } = useUser();
+
+//   // Company info states
+//   const [companyName, setCompanyName] = useState("My Billing Firm");
+//   const [companyAddress, setCompanyAddress] = useState("123 Market Road, Delhi");
+//   const [companyPhone, setCompanyPhone] = useState("9876543210");
+//   const [contactPerson, setContactPerson] = useState("");
+//   const [companyLogo, setCompanyLogo] = useState("");
+//   const [companySignature, setCompanySignature] = useState("");
+//   const [companyWebsite, setCompanyWebsite] = useState("");
+
+//   // Toggle visibility of company info
+//   const [showCompanyInfo, setShowCompanyInfo] = useState(false);
+
+//   // Billing states
+//   const [parties, setParties] = useState<any[]>([]);
+//   const [items, setItems] = useState<any[]>([]);
+//   const [savedBills, setSavedBills] = useState<SavedBill[]>([]);
+//   const [selectedParty, setSelectedParty] = useState("");
+//   const [billItems, setBillItems] = useState<BillItem[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const [loadingProfile, setLoadingProfile] = useState(true);
+
+//   // Discount & GST
+//   const [discount, setDiscount] = useState(0);
+//   const [gstPercent, setGstPercent] = useState(18);
+
+//   const fetchJson = async (url: string) => {
+//     try {
+//       const res = await fetch(url);
+//       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+//       return res.json();
+//     } catch (err) {
+//       console.error("Failed to fetch JSON from", url, err);
+//       return null;
+//     }
+//   };
+
+//   // Load company profile
+//   useEffect(() => {
+//     fetchJson("/api/profile/recent").then((data) => {
+//       if (data) {
+//         setCompanyName(data.businessName || "");
+//         setCompanyAddress(
+//           `${data.contactPersonName || ""}, ${data.contactPersonEmail || ""}, ${data.contactPersonPhone || ""}`
+//         );
+//         setCompanyPhone(data.contactPersonPhone || "");
+//         setContactPerson(data.contactPersonName || "");
+//         setCompanyLogo(data.logoUrl || "");
+//         setCompanySignature(data.signatureUrl || "");
+//         setCompanyWebsite(data.websiteUrl || "");
+//       }
+//       setLoadingProfile(false);
+//     });
+//   }, []);
+
+//   // Load parties, items, saved bills, and pending cart
+//   useEffect(() => {
+//     fetchJson("/api/parties").then((data) => data && setParties(data));
+//     fetchJson("/api/items").then((data) => data && setItems(data));
+//     fetchJson("/api/billing/list").then((data) => {
+//       if (Array.isArray(data)) {
+//         const formatted = data.map((b: any) => ({
+//           id: b.id,
+//           customerName: b.customer?.name || "Unknown",
+//           grandTotal: b.grandTotal ?? b.total ?? 0,
+//           createdAt: b.createdAt,
+//         }));
+//         setSavedBills(formatted);
+//       }
+//     });
+
+//     const pendingCart = localStorage.getItem("pendingCart");
+//     if (pendingCart) {
+//       try {
+//         const cartItems = JSON.parse(pendingCart) as Record<string, any>;
+//         const itemsArray = Object.values(cartItems)
+//           .filter((item: any) => item.id && item.name)
+//           .map((item: any) => ({
+//             id: item.id,
+//             itemName: item.name,
+//             rate: item.price ?? 0,
+//             quantity: item.quantity ?? 1,
+//           }));
+//         setBillItems(itemsArray);
+//       } catch (err) {
+//         console.error("Failed to parse pendingCart", err);
+//       }
+//     }
+//   }, []);
+
+//   const handleAddItem = (item: any) => {
+//     const existing = billItems.find((i) => i.id === item.id);
+//     if (existing) {
+//       setBillItems(
+//         billItems.map((i) =>
+//           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+//         )
+//       );
+//     } else {
+//       setBillItems([...billItems, { ...item, quantity: 1 }]);
+//     }
+//   };
+
+//   const handleQuantityChange = (id: string, qty: number) => {
+//     setBillItems(
+//       billItems.map((i) =>
+//         i.id === id ? { ...i, quantity: Math.max(1, qty) } : i
+//       )
+//     );
+//   };
+
+//   const subtotal = billItems.reduce((sum, it) => sum + it.rate * it.quantity, 0);
+//   const gstAmount = ((subtotal - discount) * gstPercent) / 100;
+//   const grandTotal = subtotal - discount + gstAmount;
+
+//   const handleGenerateBill = async () => {
+//     if (!user?.id) return alert("User not authenticated!");
+//     if (!selectedParty) return alert("Please select a customer!");
+//     if (!billItems.length) return alert("Add at least one item!");
+
+//     setLoading(true);
+//     const party = parties.find((p) => p.id === selectedParty);
+
+//     try {
+//       const products = billItems.map((i) => ({
+//         productId: i.id,
+//         productName: i.itemName,
+//         quantity: i.quantity,
+//         price: i.rate,
+//         total: i.rate * i.quantity,
+//       }));
+
+//       const validProducts = products.filter((p) => p.productId);
+
+//       const res = await fetch("/api/billing", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           userClerkId: user.id,
+//           customerId: party?.id,
+//           companyName,
+//           companyAddress,
+//           companyPhone,
+//           contactPerson,
+//           logoUrl: companyLogo,
+//           signatureUrl: companySignature,
+//           websiteUrl: companyWebsite,
+//           products: validProducts,
+//           subtotal,
+//           discount,
+//           gstPercent,
+//           gstAmount,
+//           total: grandTotal,
+//         }),
+//       });
+
+//       const data = await res.json();
+
+//       if (res.ok) {
+//         alert("✅ Bill saved successfully!");
+//         setBillItems([]);
+//         localStorage.removeItem("pendingCart");
+//         localStorage.removeItem("pendingTotal");
+
+//         setSavedBills((prev) => [
+//           ...prev,
+//           {
+//             id: data.id,
+//             customerName: party?.name || "",
+//             grandTotal,
+//             createdAt: new Date().toISOString(),
+//           },
+//         ]);
+//       } else {
+//         alert(data?.error || "❌ Failed to save bill.");
+//       }
+//     } catch (err) {
+//       console.error("Bill generation failed", err);
+//       alert("❌ Failed to save bill. Check console.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handlePrint = () => window.print();
+
+//   if (loadingProfile)
+//     return <p className="p-6 text-center">Loading business profile...</p>;
+
+//   return (
+//     <div className="p-6 max-w-3xl mx-auto bg-white rounded-lg shadow">
+//       <h1 className="text-3xl font-bold text-center mb-6">🧾 Billing System</h1>
+
+//       {/* Edit Company Profile Button */}
+//       <div className="mb-6">
+//         <button
+//           className="bg-indigo-600 text-white px-4 py-2 rounded"
+//           onClick={() => setShowCompanyInfo(!showCompanyInfo)}
+//         >
+//           {showCompanyInfo ? "Hide Company Profile" : "Edit Company Profile"}
+//         </button>
+//       </div>
+
+//       {/* Company Info (hidden by default) */}
+//       {showCompanyInfo && (
+//         <div className="space-y-2 mb-6">
+//           {companyLogo && (
+//             <img
+//               src={companyLogo}
+//               alt="Logo"
+//               className="w-32 h-32 object-contain mb-2"
+//             />
+//           )}
+//           <input
+//             value={companyName}
+//             onChange={(e) => setCompanyName(e.target.value)}
+//             className="border p-2 w-full rounded"
+//             placeholder="Company Name"
+//           />
+//           <input
+//             value={companyAddress}
+//             onChange={(e) => setCompanyAddress(e.target.value)}
+//             className="border p-2 w-full rounded"
+//             placeholder="Company Address"
+//           />
+//           <input
+//             value={companyPhone}
+//             onChange={(e) => setCompanyPhone(e.target.value)}
+//             className="border p-2 w-full rounded"
+//             placeholder="Company Phone"
+//           />
+//           <input
+//             value={contactPerson}
+//             onChange={(e) => setContactPerson(e.target.value)}
+//             className="border p-2 w-full rounded"
+//             placeholder="Contact Person"
+//           />
+//           <input
+//             value={companyWebsite}
+//             onChange={(e) => setCompanyWebsite(e.target.value)}
+//             className="border p-2 w-full rounded"
+//             placeholder="Website URL"
+//           />
+//         </div>
+//       )}
+
+//       {/* Party Selector */}
+//       <PartySelector
+//         parties={parties}
+//         selectedParty={selectedParty}
+//         setSelectedParty={setSelectedParty}
+//         refreshParties={() =>
+//           fetchJson("/api/parties").then((data) => data && setParties(data))
+//         }
+//       />
+
+//       {/* Items */}
+//       <div className="space-y-2 mb-6">
+//         <h2 className="font-semibold">🛒 Select Items</h2>
+//         {items.map((item) => {
+//           const inCart = billItems.find((i) => i.id === item.id)?.quantity || 0;
+//           return (
+//             <div
+//               key={item.id}
+//               className="flex justify-between border-b py-2 items-center"
+//             >
+//               <div>
+//                 <span className="font-medium">{item.itemName}</span>
+//                 <span className="text-sm text-gray-500 ml-2">₹{item.rate}</span>
+//               </div>
+//               <button
+//                 onClick={() => handleAddItem(item)}
+//                 className="bg-green-500 text-white px-3 py-1 rounded"
+//               >
+//                 Add
+//               </button>
+//               {inCart > 0 && (
+//                 <span className="ml-2 font-semibold text-green-600">{inCart}</span>
+//               )}
+//             </div>
+//           );
+//         })}
+//       </div>
+
+//       {/* Bill Summary */}
+//       <div className="space-y-2 mb-6 border-t pt-4">
+//         <h2 className="font-semibold">📋 Bill Summary</h2>
+
+//         {billItems.map((bi) => (
+//           <div
+//             key={bi.id}
+//             className="flex justify-between items-center border-b py-2"
+//           >
+//             <span>{bi.itemName}</span>
+//             <div className="flex items-center gap-2">
+//               <input
+//                 type="number"
+//                 min={1}
+//                 value={bi.quantity}
+//                 onChange={(e) =>
+//                   handleQuantityChange(bi.id, parseInt(e.target.value))
+//                 }
+//                 className="w-16 border p-1 rounded text-center"
+//               />
+//               <span>₹{bi.rate * bi.quantity}</span>
+//             </div>
+//           </div>
+//         ))}
+
+//         {/* Subtotal */}
+//         <div className="flex justify-between font-medium">
+//           <span>Subtotal:</span>
+//           <span>₹{subtotal}</span>
+//         </div>
+
+//         {/* Discount */}
+//         <div className="flex justify-between items-center">
+//           <span>Discount (₹):</span>
+//           <input
+//             type="number"
+//             min={0}
+//             value={discount}
+//             onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+//             className="w-24 border p-1 rounded text-right"
+//           />
+//         </div>
+
+//         {/* GST */}
+//         <div className="flex justify-between items-center">
+//           <span>GST ({gstPercent}%):</span>
+//           <span>₹{gstAmount.toFixed(2)}</span>
+//         </div>
+
+//         {/* Grand Total */}
+//         <div className="font-bold text-right text-lg mt-2">
+//           Grand Total: ₹{grandTotal.toFixed(2)}
+//         </div>
+//       </div>
+
+//       {/* Actions */}
+//       <div className="flex gap-3 justify-end mb-6">
+//         <button
+//           onClick={handleGenerateBill}
+//           disabled={loading}
+//           className="bg-indigo-600 text-white px-4 py-2 rounded"
+//         >
+//           💾 {loading ? "Saving..." : "Generate Bill"}
+//         </button>
+//         <button
+//           onClick={handlePrint}
+//           className="bg-gray-700 text-white px-4 py-2 rounded"
+//         >
+//           🖨️ Print
+//         </button>
+//       </div>
+
+//       {/* Saved Bills */}
+//       <div className="space-y-2 mt-8">
+//         <h2 className="font-semibold">📄 Saved Bills</h2>
+//         <table className="w-full border text-sm">
+//           <thead>
+//             <tr className="bg-gray-100">
+//               <th className="border px-2 py-1">Customer</th>
+//               <th className="border px-2 py-1">Total</th>
+//               <th className="border px-2 py-1">Date</th>
+//               <th className="border px-2 py-1">Action</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {savedBills.length === 0 && (
+//               <tr>
+//                 <td colSpan={4} className="text-center py-2 text-gray-500">
+//                   No bills yet
+//                 </td>
+//               </tr>
+//             )}
+//             {savedBills.map((bill) => (
+//               <tr key={bill.id}>
+//                 <td className="border px-2 py-1">{bill.customerName}</td>
+//                 <td className="border px-2 py-1">₹{bill.grandTotal}</td>
+//                 <td className="border px-2 py-1">
+//                   {new Date(bill.createdAt).toLocaleDateString()}
+//                 </td>
+//                 <td className="border px-2 py-1 text-center">
+//                   <a
+//                     href={`/billing/view/${bill.id}`}
+//                     target="_blank"
+//                     rel="noopener noreferrer"
+//                     className="text-blue-600 underline"
+//                   >
+//                     View / Print
+//                   </a>
+//                 </td>
+//               </tr>
+//             ))}
+//           </tbody>
+//         </table>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
+import PartySelector from "./PartySelector";
+
+interface BillItem {
+  id: string;
+  itemName: string;
+  rate: number;
+  quantity: number;
+}
+
+interface SavedBill {
+  id: string;
+  customerName: string;
+  grandTotal: number;
+  createdAt: string;
+}
 
 export default function BillingPage() {
+  const { user } = useUser();
+
+  // Company info states
   const [companyName, setCompanyName] = useState("My Billing Firm");
   const [companyAddress, setCompanyAddress] = useState("123 Market Road, Delhi");
   const [companyPhone, setCompanyPhone] = useState("9876543210");
@@ -587,16 +3309,18 @@ export default function BillingPage() {
   const [companySignature, setCompanySignature] = useState("");
   const [companyWebsite, setCompanyWebsite] = useState("");
 
+  // Toggle visibility of company info
+  const [showCompanyInfo, setShowCompanyInfo] = useState(false);
+
+  // Billing states
   const [parties, setParties] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
+  const [savedBills, setSavedBills] = useState<SavedBill[]>([]);
   const [selectedParty, setSelectedParty] = useState("");
-  const [newPartyName, setNewPartyName] = useState("");
-  const [newPartyPhone, setNewPartyPhone] = useState("");
-  const [billItems, setBillItems] = useState<any[]>([]);
+  const [billItems, setBillItems] = useState<BillItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
-  // Safe fetch JSON
   const fetchJson = async (url: string) => {
     try {
       const res = await fetch(url);
@@ -608,7 +3332,7 @@ export default function BillingPage() {
     }
   };
 
-  // Load business profile
+  // Load company profile
   useEffect(() => {
     fetchJson("/api/profile/recent").then((data) => {
       if (data) {
@@ -626,21 +3350,34 @@ export default function BillingPage() {
     });
   }, []);
 
-  // Load parties, items, and restore cart
+  // Load parties, items, saved bills, and pending cart
   useEffect(() => {
     fetchJson("/api/parties").then((data) => data && setParties(data));
     fetchJson("/api/items").then((data) => data && setItems(data));
+    fetchJson("/api/billing/list").then((data) => {
+      if (Array.isArray(data)) {
+        const formatted = data.map((b: any) => ({
+          id: b.id,
+          customerName: b.customer?.name || "Unknown",
+          grandTotal: b.grandTotal ?? b.total ?? 0,
+          createdAt: b.createdAt,
+        }));
+        setSavedBills(formatted);
+      }
+    });
 
     const pendingCart = localStorage.getItem("pendingCart");
     if (pendingCart) {
       try {
         const cartItems = JSON.parse(pendingCart) as Record<string, any>;
-        const itemsArray = Object.values(cartItems).map((item) => ({
-          id: item.id,
-          itemName: item.name,
-          rate: item.price ?? 0,
-          quantity: item.quantity,
-        }));
+        const itemsArray = Object.values(cartItems)
+          .filter((item: any) => item.id && item.name)
+          .map((item: any) => ({
+            id: item.id,
+            itemName: item.name,
+            rate: item.price ?? 0,
+            quantity: item.quantity ?? 1,
+          }));
         setBillItems(itemsArray);
       } catch (err) {
         console.error("Failed to parse pendingCart", err);
@@ -669,37 +3406,10 @@ export default function BillingPage() {
     );
   };
 
-  const total = billItems.reduce((sum, it) => sum + it.rate * it.quantity, 0);
-
-  const handleAddNewParty = async () => {
-    if (!newPartyName.trim() || !newPartyPhone.trim()) {
-      alert("Please enter name and phone");
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/parties", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newPartyName, phone: newPartyPhone }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setParties([...parties, data]);
-        setSelectedParty(data.id);
-        setNewPartyName("");
-        setNewPartyPhone("");
-        alert("✅ Customer added!");
-      } else {
-        alert(data?.error || "Failed to add customer");
-      }
-    } catch (err) {
-      console.error("Add party failed", err);
-      alert("❌ Failed to add customer. Check console.");
-    }
-  };
+  const subtotal = billItems.reduce((sum, it) => sum + it.rate * it.quantity, 0);
 
   const handleGenerateBill = async () => {
+    if (!user?.id) return alert("User not authenticated!");
     if (!selectedParty) return alert("Please select a customer!");
     if (!billItems.length) return alert("Add at least one item!");
 
@@ -707,11 +3417,21 @@ export default function BillingPage() {
     const party = parties.find((p) => p.id === selectedParty);
 
     try {
+      const products = billItems.map((i) => ({
+        productId: i.id,
+        productName: i.itemName,
+        quantity: i.quantity,
+        price: i.rate,
+        total: i.rate * i.quantity,
+      }));
+
+      const validProducts = products.filter((p) => p.productId);
+
       const res = await fetch("/api/billing", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: "USER_ID_HERE", // replace with Clerk ID/session
+          userClerkId: user.id,
           customerId: party?.id,
           companyName,
           companyAddress,
@@ -720,13 +3440,8 @@ export default function BillingPage() {
           logoUrl: companyLogo,
           signatureUrl: companySignature,
           websiteUrl: companyWebsite,
-          products: billItems.map((i) => ({
-            productId: i.id,
-            quantity: i.quantity,
-            price: i.rate,
-            total: i.rate * i.quantity,
-          })),
-          total,
+          products: validProducts,
+          total: subtotal,
         }),
       });
 
@@ -737,6 +3452,16 @@ export default function BillingPage() {
         setBillItems([]);
         localStorage.removeItem("pendingCart");
         localStorage.removeItem("pendingTotal");
+
+        setSavedBills((prev) => [
+          ...prev,
+          {
+            id: data.id,
+            customerName: party?.name || "",
+            grandTotal: subtotal,
+            createdAt: new Date().toISOString(),
+          },
+        ]);
       } else {
         alert(data?.error || "❌ Failed to save bill.");
       }
@@ -750,36 +3475,75 @@ export default function BillingPage() {
 
   const handlePrint = () => window.print();
 
-  if (loadingProfile) return <p className="p-6">Loading business profile...</p>;
+  if (loadingProfile)
+    return <p className="p-6 text-center">Loading business profile...</p>;
 
   return (
     <div className="p-6 max-w-3xl mx-auto bg-white rounded-lg shadow">
       <h1 className="text-3xl font-bold text-center mb-6">🧾 Billing System</h1>
 
-      {/* Company Info */}
-      <div className="space-y-2 mb-6">
-        <h2 className="font-semibold">🏢 Company Info</h2>
-        {companyLogo && <img src={companyLogo} alt="Logo" className="w-32 h-32 object-contain mb-2" />}
-        <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Name" />
-        <input value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Address" />
-        <input value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)} className="border p-2 w-full rounded" placeholder="Company Phone" />
-        <input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} className="border p-2 w-full rounded" placeholder="Contact Person" />
-        <input value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className="border p-2 w-full rounded" placeholder="Website URL" />
+      {/* Edit Company Profile Button */}
+      <div className="mb-6">
+        <button
+          className="bg-indigo-600 text-white px-4 py-2 rounded"
+          onClick={() => setShowCompanyInfo(!showCompanyInfo)}
+        >
+          {showCompanyInfo ? "Hide Company Profile" : "Edit Company Profile"}
+        </button>
       </div>
 
-      {/* Party Selector */}
-      <div className="space-y-2 mb-6">
-        <h2 className="font-semibold">👤 Select or Add Customer</h2>
-        <select className="border p-2 rounded w-full" value={selectedParty} onChange={(e) => setSelectedParty(e.target.value)}>
-          <option value="">Select Customer</option>
-          {parties.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.phone})</option>)}
-        </select>
-        <div className="flex gap-2 mt-2">
-          <input className="border p-2 flex-1 rounded" placeholder="New Customer Name" value={newPartyName} onChange={(e) => setNewPartyName(e.target.value)} />
-          <input className="border p-2 flex-1 rounded" placeholder="Phone" value={newPartyPhone} onChange={(e) => setNewPartyPhone(e.target.value)} />
-          <button onClick={handleAddNewParty} className="bg-blue-600 text-white px-4 py-2 rounded">➕ Add</button>
+      {/* Company Info (hidden by default) */}
+      {showCompanyInfo && (
+        <div className="space-y-2 mb-6">
+          {companyLogo && (
+            <img
+              src={companyLogo}
+              alt="Logo"
+              className="w-32 h-32 object-contain mb-2"
+            />
+          )}
+          <input
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            className="border p-2 w-full rounded"
+            placeholder="Company Name"
+          />
+          <input
+            value={companyAddress}
+            onChange={(e) => setCompanyAddress(e.target.value)}
+            className="border p-2 w-full rounded"
+            placeholder="Company Address"
+          />
+          <input
+            value={companyPhone}
+            onChange={(e) => setCompanyPhone(e.target.value)}
+            className="border p-2 w-full rounded"
+            placeholder="Company Phone"
+          />
+          <input
+            value={contactPerson}
+            onChange={(e) => setContactPerson(e.target.value)}
+            className="border p-2 w-full rounded"
+            placeholder="Contact Person"
+          />
+          <input
+            value={companyWebsite}
+            onChange={(e) => setCompanyWebsite(e.target.value)}
+            className="border p-2 w-full rounded"
+            placeholder="Website URL"
+          />
         </div>
-      </div>
+      )}
+
+      {/* Party Selector */}
+      <PartySelector
+        parties={parties}
+        selectedParty={selectedParty}
+        setSelectedParty={setSelectedParty}
+        refreshParties={() =>
+          fetchJson("/api/parties").then((data) => data && setParties(data))
+        }
+      />
 
       {/* Items */}
       <div className="space-y-2 mb-6">
@@ -787,13 +3551,23 @@ export default function BillingPage() {
         {items.map((item) => {
           const inCart = billItems.find((i) => i.id === item.id)?.quantity || 0;
           return (
-            <div key={item.id} className="flex justify-between border-b py-2 items-center">
+            <div
+              key={item.id}
+              className="flex justify-between border-b py-2 items-center"
+            >
               <div>
                 <span className="font-medium">{item.itemName}</span>
                 <span className="text-sm text-gray-500 ml-2">₹{item.rate}</span>
               </div>
-              <button onClick={() => handleAddItem(item)} className="bg-green-500 text-white px-3 py-1 rounded">Add</button>
-              {inCart > 0 && <span className="ml-2 font-semibold text-green-600">{inCart}</span>}
+              <button
+                onClick={() => handleAddItem(item)}
+                className="bg-green-500 text-white px-3 py-1 rounded"
+              >
+                Add
+              </button>
+              {inCart > 0 && (
+                <span className="ml-2 font-semibold text-green-600">{inCart}</span>
+              )}
             </div>
           );
         })}
@@ -802,24 +3576,92 @@ export default function BillingPage() {
       {/* Bill Summary */}
       <div className="space-y-2 mb-6 border-t pt-4">
         <h2 className="font-semibold">📋 Bill Summary</h2>
+
         {billItems.map((bi) => (
-          <div key={bi.id} className="flex justify-between items-center border-b py-2">
+          <div
+            key={bi.id}
+            className="flex justify-between items-center border-b py-2"
+          >
             <span>{bi.itemName}</span>
             <div className="flex items-center gap-2">
-              <input type="number" value={bi.quantity} min="1" onChange={(e) => handleQuantityChange(bi.id, parseInt(e.target.value))} className="w-16 border p-1 rounded text-center" />
+              <input
+                type="number"
+                min={1}
+                value={bi.quantity}
+                onChange={(e) =>
+                  handleQuantityChange(bi.id, parseInt(e.target.value))
+                }
+                className="w-16 border p-1 rounded text-center"
+              />
               <span>₹{bi.rate * bi.quantity}</span>
             </div>
           </div>
         ))}
-        <div className="font-bold text-right mt-2">Total: ₹{total}</div>
+
+        {/* Grand Total */}
+        <div className="font-bold text-right text-lg mt-2">
+          Grand Total: ₹{subtotal.toFixed(2)}
+        </div>
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 justify-end">
-        <button onClick={handleGenerateBill} disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded">
+      <div className="flex gap-3 justify-end mb-6">
+        <button
+          onClick={handleGenerateBill}
+          disabled={loading}
+          className="bg-indigo-600 text-white px-4 py-2 rounded"
+        >
           💾 {loading ? "Saving..." : "Generate Bill"}
         </button>
-        <button onClick={handlePrint} className="bg-gray-700 text-white px-4 py-2 rounded">🖨️ Print</button>
+        <button
+          onClick={handlePrint}
+          className="bg-gray-700 text-white px-4 py-2 rounded"
+        >
+          🖨️ Print
+        </button>
+      </div>
+
+      {/* Saved Bills */}
+      <div className="space-y-2 mt-8">
+        <h2 className="font-semibold">📄 Saved Bills</h2>
+        <table className="w-full border text-sm">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border px-2 py-1">Customer</th>
+              <th className="border px-2 py-1">Total</th>
+              <th className="border px-2 py-1">Date</th>
+              <th className="border px-2 py-1">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {savedBills.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-center py-2 text-gray-500">
+                  No bills yet
+                </td>
+              </tr>
+            )}
+            {savedBills.map((bill) => (
+              <tr key={bill.id}>
+                <td className="border px-2 py-1">{bill.customerName}</td>
+                <td className="border px-2 py-1">₹{bill.grandTotal}</td>
+                <td className="border px-2 py-1">
+                  {new Date(bill.createdAt).toLocaleDateString()}
+                </td>
+                <td className="border px-2 py-1 text-center">
+                  <a
+                    href={`/billing/view/${bill.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    View / Print
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

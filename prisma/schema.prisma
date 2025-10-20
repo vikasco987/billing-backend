@@ -113,6 +113,16 @@ model Bill {
   paymentMode   String?
   notes         String?
   dueDate       DateTime?
+
+  // ✅ New company fields added
+  companyName    String?
+  companyAddress String?
+  companyPhone   String?
+  contactPerson  String?
+  logoUrl        String?
+  signatureUrl   String?
+  websiteUrl     String?
+
   payments      Payment[]
   history       BillHistory[]
   createdAt     DateTime      @default(now())
@@ -121,11 +131,11 @@ model Bill {
 // ===================== BILLPRODUCT =====================
 
 model BillProduct {
-  id        String  @id @default(auto()) @map("_id") @db.ObjectId
-  billId    String  @db.ObjectId
-  productId String  @db.ObjectId
-  bill      Bill    @relation(fields: [billId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  product   Product @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  billId    String   @db.ObjectId
+  productId String   @db.ObjectId
+  bill      Bill     @relation(fields: [billId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   quantity  Int
   price     Float
   discount  Float?
