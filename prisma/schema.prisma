@@ -40,9 +40,8 @@ model Category {
 }
 
 // ===================== ITEM =====================
-
 model Item {
-  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
   name          String
   description   String?
   price         Float?
@@ -64,14 +63,19 @@ model Item {
   variants      Json?
   imageUrl      String?
   gallery       String[]
-  categoryId    String         @db.ObjectId
-  category      Category       @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  userId        String
-  user          User           @relation(fields: [userId], references: [clerkId])
+  categoryId    String   @db.ObjectId
+  category      Category @relation(fields: [categoryId], references: [id])
+
+  clerkId       String   // Clerk user ID stored separately
+  userId        String   @db.ObjectId
+  user          User     @relation(fields: [userId], references: [id])
+
   purchases     PurchaseItem[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
+
+
 
 // ===================== PARTY =====================
 
