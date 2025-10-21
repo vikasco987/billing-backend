@@ -344,9 +344,201 @@
 
 
 
+// // File: src/app/api/billing/route.ts
+// import { NextResponse } from "next/server";
+// import { prisma } from "@/lib/prisma";
+
+// interface ProductInput {
+//   productId: string;
+//   quantity: number;
+//   price: number;
+//   discount?: number;
+//   gst?: number;
+//   total: number;
+// }
+
+// export async function POST(req: Request) {
+//   try {
+//     const body = await req.json();
+//     const {
+//       userClerkId,
+//       customerId,
+//       products,
+//       total,
+//       discount,
+//       gst,
+//       grandTotal,
+//       paymentMode,
+//       paymentStatus,
+//       notes,
+//       dueDate,
+//       companyName,
+//       companyAddress,
+//       companyPhone,
+//       contactPerson,
+//       logoUrl,
+//       signatureUrl,
+//       websiteUrl,
+//     } = body;
+
+//     if (!userClerkId || !products?.length) {
+//       return NextResponse.json(
+//         { message: "Missing required fields or products" },
+//         { status: 400 }
+//       );
+//     }
+
+//     const dbUser = await prisma.user.findUnique({
+//       where: { clerkId: userClerkId },
+//     });
+//     if (!dbUser) {
+//       return NextResponse.json({ message: "Invalid user" }, { status: 400 });
+//     }
+
+//     // Only keep products that actually exist
+//     const validItems = await prisma.item.findMany({
+//       where: { id: { in: products.map((p: ProductInput) => p.productId) } },
+//     });
+//     const validProductIds = validItems.map((i) => i.id);
+//     const validProducts = (products as ProductInput[]).filter((p) =>
+//       validProductIds.includes(p.productId)
+//     );
+
+//     if (!validProducts.length) {
+//       return NextResponse.json(
+//         { message: "No valid products provided" },
+//         { status: 400 }
+//       );
+//     }
+
+//     const bill = await prisma.bill.create({
+//       data: {
+//         userId: dbUser.id,
+//         customerId: customerId || undefined,
+//         total,
+//         discount,
+//         gst,
+//         grandTotal,
+//         paymentMode,
+//         paymentStatus,
+//         notes,
+//         dueDate: dueDate ? new Date(dueDate) : undefined,
+
+//         // Optional company fields
+//         companyName: companyName || undefined,
+//         companyAddress: companyAddress || undefined,
+//         companyPhone: companyPhone || undefined,
+//         contactPerson: contactPerson || undefined,
+//         logoUrl: logoUrl || undefined,
+//         signatureUrl: signatureUrl || undefined,
+//         websiteUrl: websiteUrl || undefined,
+
+//         products: {
+//           create: validProducts.map((p) => ({
+//             productId: p.productId,
+//             quantity: p.quantity,
+//             price: p.price,
+//             discount: p.discount,
+//             gst: p.gst,
+//             total: p.total,
+//           })),
+//         },
+
+//         history: {
+//           create: {
+//             snapshot: {
+//               products: validProducts,
+//               total,
+//               discount,
+//               gst,
+//               grandTotal,
+//               paymentMode,
+//               paymentStatus,
+//               notes,
+//               dueDate,
+//               companyName,
+//               companyAddress,
+//               companyPhone,
+//               contactPerson,
+//               logoUrl,
+//               signatureUrl,
+//               websiteUrl,
+//             },
+//           },
+//         },
+//       },
+//       include: {
+//         // ✅ remove `product: true` to avoid null errors
+//         products: true,
+//         customer: true,
+//         payments: true,
+//         history: true,
+//       },
+//     });
+
+//     return NextResponse.json(bill);
+//   } catch (error: any) {
+//     console.error("Error creating bill:", error);
+//     return NextResponse.json(
+//       { message: "Failed to create bill", error: error.message },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//run build
+
+
+
+
+
+
+
+
+
+
+
+
 // File: src/app/api/billing/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 interface ProductInput {
   productId: string;
@@ -388,18 +580,22 @@ export async function POST(req: Request) {
       );
     }
 
+    // ✅ Find the user from Clerk ID
     const dbUser = await prisma.user.findUnique({
       where: { clerkId: userClerkId },
     });
+
     if (!dbUser) {
       return NextResponse.json({ message: "Invalid user" }, { status: 400 });
     }
 
-    // Only keep products that actually exist
+    // ✅ Fetch only valid products from DB
     const validItems = await prisma.item.findMany({
       where: { id: { in: products.map((p: ProductInput) => p.productId) } },
     });
+
     const validProductIds = validItems.map((i) => i.id);
+
     const validProducts = (products as ProductInput[]).filter((p) =>
       validProductIds.includes(p.productId)
     );
@@ -411,6 +607,36 @@ export async function POST(req: Request) {
       );
     }
 
+    // ✅ Properly balanced JSON.stringify / JSON.parse
+    const snapshot: Prisma.InputJsonValue = JSON.parse(
+      JSON.stringify({
+        products: validProducts.map((p) => ({
+          productId: p.productId,
+          quantity: p.quantity,
+          price: p.price,
+          discount: p.discount,
+          gst: p.gst,
+          total: p.total,
+        })),
+        total,
+        discount,
+        gst,
+        grandTotal,
+        paymentMode,
+        paymentStatus,
+        notes,
+        dueDate,
+        companyName,
+        companyAddress,
+        companyPhone,
+        contactPerson,
+        logoUrl,
+        signatureUrl,
+        websiteUrl,
+      })
+    ); // ✅ ← correctly closed now!
+
+    // ✅ Create bill with related products & snapshot history
     const bill = await prisma.bill.create({
       data: {
         userId: dbUser.id,
@@ -424,7 +650,7 @@ export async function POST(req: Request) {
         notes,
         dueDate: dueDate ? new Date(dueDate) : undefined,
 
-        // Optional company fields
+        // Company / Branding fields
         companyName: companyName || undefined,
         companyAddress: companyAddress || undefined,
         companyPhone: companyPhone || undefined,
@@ -433,6 +659,7 @@ export async function POST(req: Request) {
         signatureUrl: signatureUrl || undefined,
         websiteUrl: websiteUrl || undefined,
 
+        // Product list creation
         products: {
           create: validProducts.map((p) => ({
             productId: p.productId,
@@ -444,31 +671,14 @@ export async function POST(req: Request) {
           })),
         },
 
+        // History record with JSON snapshot
         history: {
           create: {
-            snapshot: {
-              products: validProducts,
-              total,
-              discount,
-              gst,
-              grandTotal,
-              paymentMode,
-              paymentStatus,
-              notes,
-              dueDate,
-              companyName,
-              companyAddress,
-              companyPhone,
-              contactPerson,
-              logoUrl,
-              signatureUrl,
-              websiteUrl,
-            },
+            snapshot,
           },
         },
       },
       include: {
-        // ✅ remove `product: true` to avoid null errors
         products: true,
         customer: true,
         payments: true,
