@@ -76,16 +76,22 @@ model Item {
 // ===================== PARTY =====================
 
 model Party {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  phone     String    @unique
-  address   String?
-  dob       DateTime?
-  userId    String?
-  user      User?     @relation(fields: [userId], references: [clerkId])
-  bills     Bill[]
-  createdAt DateTime  @default(now())
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  phone      String    @unique
+  address    String?
+  dob        DateTime?
+  
+  // ✅ Store Clerk User ID of the creator
+  createdBy  String
+  user       User?     @relation(fields: [createdBy], references: [clerkId])
+
+  // ✅ Relation to bills (if this customer is billed)
+  bills      Bill[]
+
+  createdAt  DateTime  @default(now())
 }
+
 
 // ===================== PRODUCT =====================
 
