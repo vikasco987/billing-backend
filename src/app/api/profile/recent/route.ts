@@ -466,6 +466,130 @@
 
 
 
+// import { NextResponse } from "next/server";
+// import prisma from "@/lib/prisma";
+// import { currentUser } from "@clerk/nextjs/server";
+
+// // =============================
+// // CREATE BUSINESS PROFILE (POST)
+// // =============================
+// export async function POST(req: Request) {
+//   try {
+//     // Receive JSON from frontend
+//     const data = await req.json();
+//     const user = await currentUser();
+
+//     if (!user?.id) {
+//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+//     }
+
+//     // ---- Extract fields ----
+//     const {
+//       businessType,
+//       businessName,
+//       businessTagline = "",
+//       contactName,
+//       contactPhone,
+//       contactEmail,
+//       upi = "",
+//       reviewLink = "",
+//       profileImage, // Cloudinary URL from frontend
+//       logo,         // Cloudinary URL from frontend
+//       signature,    // Cloudinary URL from frontend
+//     } = data;
+
+//     // ---- Validation ----
+//     const required: Record<string, string> = {
+//       businessType: "Business Type is required",
+//       businessName: "Business Name is required",
+//       contactName: "Contact Person Name is required",
+//       contactPhone: "Phone number is required",
+//       contactEmail: "Email is required",
+//     };
+
+//     for (const field in required) {
+//       if (!data[field]) {
+//         return NextResponse.json({ error: required[field] }, { status: 400 });
+//       }
+//     }
+
+//     // ---- Save profile to database ----
+//     const profile = await prisma.businessProfile.create({
+//       data: {
+//         userId: user.id,
+//         businessType,
+//         businessName,
+//         businessTagLine: businessTagline,
+//         contactPersonName: contactName,
+//         contactPersonPhone: contactPhone,
+//         contactPersonEmail: contactEmail,
+//         upi,
+//         googleReviewUrl: reviewLink,
+//         profileImageUrl: profileImage || "",
+//         logoUrl: logo || "",
+//         signatureUrl: signature || "",
+//       },
+//     });
+
+//     return NextResponse.json(profile, { status: 201 });
+//   } catch (err: any) {
+//     console.error("Profile save error:", err);
+
+//     if (err.code === "P2002") {
+//       return NextResponse.json({ error: "Duplicate entry" }, { status: 409 });
+//     }
+
+//     return NextResponse.json(
+//       { error: "Failed to save profile", details: err.message },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+// // =============================
+// // GET MOST RECENT BUSINESS PROFILE
+// // =============================
+// export async function GET() {
+//   try {
+//     const user = await currentUser();
+
+//     if (!user?.id) {
+//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+//     }
+
+//     const profile = await prisma.businessProfile.findFirst({
+//       where: { userId: user.id },
+//       orderBy: { createdAt: "desc" },
+//     });
+
+//     if (!profile) {
+//       return NextResponse.json(
+//         { message: "No Business Profile found" },
+//         { status: 404 }
+//       );
+//     }
+
+//     return NextResponse.json(profile, { status: 200 });
+//   } catch (err: any) {
+//     console.error("Fetch profile error:", err);
+//     return NextResponse.json(
+//       { error: "Failed to fetch profile", details: err.message },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
@@ -475,7 +599,6 @@ import { currentUser } from "@clerk/nextjs/server";
 // =============================
 export async function POST(req: Request) {
   try {
-    // Receive JSON from frontend
     const data = await req.json();
     const user = await currentUser();
 
@@ -493,9 +616,13 @@ export async function POST(req: Request) {
       contactEmail,
       upi = "",
       reviewLink = "",
-      profileImage, // Cloudinary URL from frontend
-      logo,         // Cloudinary URL from frontend
-      signature,    // Cloudinary URL from frontend
+      profileImage, // Cloudinary URL
+      logo,         // Cloudinary URL
+      signature,    // Cloudinary URL
+      gstNumber = "",
+      businessAddress = "",
+      state = "",
+      pinCode = "",
     } = data;
 
     // ---- Validation ----
@@ -513,10 +640,11 @@ export async function POST(req: Request) {
       }
     }
 
-    // ---- Save profile to database ----
+    // ---- Save to DB ----
     const profile = await prisma.businessProfile.create({
       data: {
         userId: user.id,
+        createdBy: user.id, // ✅ Store Clerk user ID of the creator
         businessType,
         businessName,
         businessTagLine: businessTagline,
@@ -528,6 +656,10 @@ export async function POST(req: Request) {
         profileImageUrl: profileImage || "",
         logoUrl: logo || "",
         signatureUrl: signature || "",
+        gstNumber,
+        businessAddress,
+        state,
+        pinCode,
       },
     });
 

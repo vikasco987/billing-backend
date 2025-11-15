@@ -124,6 +124,13 @@ model Bill {
   notes         String?
   dueDate       DateTime?
 
+  // 🔹 New optional fields for Hold feature
+  holdBy        String?       // clerkId of the user who held the bill
+  holdAt        DateTime?     // timestamp when bill was held
+  resumedAt     DateTime?
+  isHeld        Boolean @default(false)
+
+
   // ✅ New company fields added
   companyName    String?
   companyAddress String?
@@ -244,11 +251,11 @@ model Field {
 }
 
 // ===================== BUSINESS PROFILE =====================
-
 model BusinessProfile {
   id                 String   @id @default(auto()) @map("_id") @db.ObjectId
   userId             String
   user               User     @relation(fields: [userId], references: [clerkId])
+
   businessType       String?
   businessName       String?
   businessTagLine    String?
@@ -260,6 +267,13 @@ model BusinessProfile {
   profileImageUrl    String?
   logoUrl            String?
   signatureUrl       String?
+
+  // 🧾 Added fields for business details
+  gstNumber          String?
+  businessAddress    String?
+  state              String?
+  pinCode            String?
+
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
