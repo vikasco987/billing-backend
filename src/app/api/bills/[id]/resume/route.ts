@@ -55,35 +55,35 @@
 
 
 
-// // src/app/api/bills/[id]/resume/route.ts
-// import { NextResponse } from "next/server";
-// import prisma from "@/lib/prisma";
+// src/app/api/bills/[id]/resume/route.ts
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
-// export async function POST(req: Request, { params }: { params: { id: string } }) {
-//   try {
-//     // ✅ Get bill ID from params
-//     const id = params.id;
+export async function POST(req: Request, { params }: { params: { id: string } }) {
+  try {
+    // ✅ Get bill ID from params
+    const id = params.id;
 
-//     // 1️⃣ Find the bill
-//     const bill = await prisma.bill.findUnique({ where: { id } });
-//     if (!bill) return NextResponse.json({ error: "Bill not found" }, { status: 404 });
+    // 1️⃣ Find the bill
+    const bill = await prisma.bill.findUnique({ where: { id } });
+    if (!bill) return NextResponse.json({ error: "Bill not found" }, { status: 404 });
 
-//     // 2️⃣ Update the bill to mark it as resumed (not held anymore)
-//     const resumedBill = await prisma.bill.update({
-//       where: { id },
-//       data: {
-//         isHeld: false,
-//         holdAt: null,
-//         resumedAt: new Date(), // <-- now valid field
-//       },
-//     });
+    // 2️⃣ Update the bill to mark it as resumed (not held anymore)
+    const resumedBill = await prisma.bill.update({
+      where: { id },
+      data: {
+        isHeld: false,
+        holdAt: null,
+        resumedAt: new Date(), // <-- now valid field
+      },
+    });
 
-//     return NextResponse.json({ resumedBill });
-//   } catch (err) {
-//     console.error("Error resuming bill:", err);
-//     return NextResponse.json({ error: "Failed to resume bill" }, { status: 500 });
-//   }
-// }
+    return NextResponse.json({ resumedBill });
+  } catch (err) {
+    console.error("Error resuming bill:", err);
+    return NextResponse.json({ error: "Failed to resume bill" }, { status: 500 });
+  }
+}
 
 
 
@@ -182,45 +182,45 @@
 
 
 
-// src/app/api/bills/[id]/resume/route.ts
-import { prisma } from "@/lib/prisma";
-import { NextRequest } from "next/server";
+// // src/app/api/bills/[id]/resume/route.ts
+// import { prisma } from "@/lib/prisma";
+// import { NextRequest } from "next/server";
 
-// Correct type for context params in App Router
-type Params = { params: { id: string } };
+// // Correct type for context params in App Router
+// type Params = { params: { id: string } };
 
-export async function POST(req: NextRequest, context: Params) {
-  try {
-    const { id } = context.params; // Bill ID from URL
+// export async function POST(req: NextRequest, context: Params) {
+//   try {
+//     const { id } = context.params; // Bill ID from URL
 
-    // 1️⃣ Find the bill
-    const bill = await prisma.bill.findUnique({
-      where: { id },
-      include: { products: true },
-    });
+//     // 1️⃣ Find the bill
+//     const bill = await prisma.bill.findUnique({
+//       where: { id },
+//       include: { products: true },
+//     });
 
-    if (!bill) {
-      return new Response(JSON.stringify({ error: "Bill not found" }), {
-        status: 404,
-      });
-    }
+//     if (!bill) {
+//       return new Response(JSON.stringify({ error: "Bill not found" }), {
+//         status: 404,
+//       });
+//     }
 
-    // 2️⃣ Update the bill to mark it as resumed
-    const resumedBill = await prisma.bill.update({
-      where: { id },
-      data: {
-        isHeld: false,
-        holdAt: null,
-        resumedAt: new Date(),
-      },
-      include: { products: true },
-    });
+//     // 2️⃣ Update the bill to mark it as resumed
+//     const resumedBill = await prisma.bill.update({
+//       where: { id },
+//       data: {
+//         isHeld: false,
+//         holdAt: null,
+//         resumedAt: new Date(),
+//       },
+//       include: { products: true },
+//     });
 
-    return new Response(JSON.stringify({ resumedBill }), { status: 200 });
-  } catch (err) {
-    console.error("Error resuming bill:", err);
-    return new Response(JSON.stringify({ error: "Failed to resume bill" }), {
-      status: 500,
-    });
-  }
-}
+//     return new Response(JSON.stringify({ resumedBill }), { status: 200 });
+//   } catch (err) {
+//     console.error("Error resuming bill:", err);
+//     return new Response(JSON.stringify({ error: "Failed to resume bill" }), {
+//       status: 500,
+//     });
+//   }
+// }
