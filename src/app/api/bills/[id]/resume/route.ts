@@ -88,19 +88,72 @@
 
 
 
+// import { prisma } from "@/lib/prisma";
+
+// export async function POST(req: Request, { params }: { params: { id: string } }) {
+//   try {
+//     const { id } = params; // Bill ID from URL
+
+//     // 1️⃣ Find the bill
+//     const bill = await prisma.bill.findUnique({
+//       where: { id },
+//       include: { products: true }, // ✅ include products
+//     });
+
+//     if (!bill) return new Response(JSON.stringify({ error: "Bill not found" }), { status: 404 });
+
+//     // 2️⃣ Update the bill to mark it as resumed
+//     const resumedBill = await prisma.bill.update({
+//       where: { id },
+//       data: {
+//         isHeld: false,
+//         holdAt: null,
+//         resumedAt: new Date(), // <-- your new field
+//       },
+//       include: { products: true }, // ✅ include products for frontend
+//     });
+
+//     return new Response(JSON.stringify({ resumedBill }), { status: 200 });
+//   } catch (err) {
+//     console.error("Error resuming bill:", err);
+//     return new Response(JSON.stringify({ error: "Failed to resume bill" }), { status: 500 });
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+// src/app/api/bills/[id]/resume/route.ts
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(
+  req: NextRequest,
+  context: { params: { id: string } }  // ✅ App Router expects params as object
+) {
   try {
-    const { id } = params; // Bill ID from URL
+    const { id } = context.params; // Bill ID from URL
 
     // 1️⃣ Find the bill
     const bill = await prisma.bill.findUnique({
       where: { id },
-      include: { products: true }, // ✅ include products
+      include: { products: true }, // include related products
     });
 
-    if (!bill) return new Response(JSON.stringify({ error: "Bill not found" }), { status: 404 });
+    if (!bill) {
+      return new Response(
+        JSON.stringify({ error: "Bill not found" }),
+        { status: 404 }
+      );
+    }
 
     // 2️⃣ Update the bill to mark it as resumed
     const resumedBill = await prisma.bill.update({
@@ -108,14 +161,19 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       data: {
         isHeld: false,
         holdAt: null,
-        resumedAt: new Date(), // <-- your new field
+        resumedAt: new Date(), // timestamp when resumed
       },
-      include: { products: true }, // ✅ include products for frontend
+      include: { products: true }, // include products for frontend
     });
 
+    // ✅ Return the resumed bill
     return new Response(JSON.stringify({ resumedBill }), { status: 200 });
+
   } catch (err) {
     console.error("Error resuming bill:", err);
-    return new Response(JSON.stringify({ error: "Failed to resume bill" }), { status: 500 });
+    return new Response(
+      JSON.stringify({ error: "Failed to resume bill" }),
+      { status: 500 }
+    );
   }
 }
