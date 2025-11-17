@@ -179,6 +179,156 @@
 
 
 
+// // src/app/api/billing/list/route.ts
+// import { prisma } from "@/lib/prisma";
+// import { currentUser } from "@clerk/nextjs/server";
+
+// export async function GET() {
+//   try {
+//     // 1️⃣ Get currently logged-in Clerk user
+//     const clerkUser = await currentUser();
+//     if (!clerkUser) {
+//       return new Response(
+//         JSON.stringify({ error: "Unauthorized" }),
+//         { status: 401 }
+//       );
+//     }
+
+//     // 2️⃣ Match Clerk user to your internal User table
+//     const appUser = await prisma.user.findUnique({
+//       where: { clerkId: clerkUser.id },
+//     });
+
+//     if (!appUser) {
+//       return new Response(
+//         JSON.stringify({ error: "User not found" }),
+//         { status: 404 }
+//       );
+//     }
+
+//     // 3️⃣ Get ONLY this user's bills (prevents showing another user’s data)
+//     const bills = await prisma.bill.findMany({
+//       where: {
+//         userId: appUser.id, // internal Mongo/SQL ID, not Clerk ID
+//       },
+//       orderBy: { createdAt: "desc" },
+//       include: {
+//         customer: true,
+//         products: {
+//           include: { product: true },
+//         },
+//         payments: true,
+//       },
+//     });
+
+//     return new Response(
+//       JSON.stringify({ bills }),
+//       {
+//         status: 200,
+//         headers: {
+//           "Cache-Control": "no-store, no-cache, must-revalidate",
+//         },
+//       }
+//     );
+
+//   } catch (err) {
+//     console.error("❌ Error fetching bills:", err);
+
+//     return new Response(
+//       JSON.stringify({ error: "Failed to fetch bills" }),
+//       { status: 500 }
+//     );
+//   }
+// }
+
+
+
+
+
+
+
+
+
+// // src/app/api/billing/list/route.ts
+// import { prisma } from "@/lib/prisma";
+// import { currentUser } from "@clerk/nextjs/server";
+
+// export async function GET() {
+//   try {
+//     // 1️⃣ Get currently logged-in Clerk user
+//     const clerkUser = await currentUser();
+//     if (!clerkUser) {
+//       return new Response(
+//         JSON.stringify({ error: "Unauthorized" }),
+//         { status: 401 }
+//       );
+//     }
+
+//     // 2️⃣ Match Clerk user to your internal User table
+//     const appUser = await prisma.user.findUnique({
+//       where: { clerkId: clerkUser.id },
+//     });
+
+//     if (!appUser) {
+//       return new Response(
+//         JSON.stringify({ error: "User not found" }),
+//         { status: 404 }
+//       );
+//     }
+
+//     // 3️⃣ Get ONLY this user's bills (prevents showing another user’s data)
+//     const bills = await prisma.bill.findMany({
+//       where: {
+//         userId: appUser.id, // internal Mongo/SQL ID, not Clerk ID
+//       },
+//       orderBy: { createdAt: "desc" },
+//       include: {
+//         customer: true,
+//         products: {
+//           include: { product: true },
+//         },
+//         payments: true,
+//       },
+//     });
+
+//     return new Response(
+//       JSON.stringify({ bills }),
+//       {
+//         status: 200,
+//         headers: {
+//           "Cache-Control": "no-store, no-cache, must-revalidate",
+//         },
+//       }
+//     );
+
+//   } catch (err) {
+//     console.error("❌ Error fetching bills:", err);
+
+//     return new Response(
+//       JSON.stringify({ error: "Failed to fetch bills" }),
+//       { status: 500 }
+//     );
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // src/app/api/billing/list/route.ts
 import { prisma } from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
@@ -206,11 +356,9 @@ export async function GET() {
       );
     }
 
-    // 3️⃣ Get ONLY this user's bills (prevents showing another user’s data)
+    // 3️⃣ Get ONLY this user's bills
     const bills = await prisma.bill.findMany({
-      where: {
-        userId: appUser.id, // internal Mongo/SQL ID, not Clerk ID
-      },
+      where: { userId: appUser.id },
       orderBy: { createdAt: "desc" },
       include: {
         customer: true,
@@ -221,8 +369,17 @@ export async function GET() {
       },
     });
 
+    // 4️⃣ Fix null product references
+    const cleanedBills = bills.map(bill => ({
+      ...bill,
+      products: bill.products.map(p => ({
+        ...p,
+        product: p.product || { id: null, name: "Deleted product" }, // fallback
+      })),
+    }));
+
     return new Response(
-      JSON.stringify({ bills }),
+      JSON.stringify({ bills: cleanedBills }),
       {
         status: 200,
         headers: {
