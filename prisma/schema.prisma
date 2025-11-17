@@ -66,36 +66,33 @@ model Item {
   categoryId    String   @db.ObjectId
   category      Category @relation(fields: [categoryId], references: [id])
 
-  clerkId       String   // Clerk user ID stored separately
-  userId        String   @db.ObjectId
-  user          User     @relation(fields: [userId], references: [id])
+  clerkId String // Clerk user ID stored separately
+  userId  String @db.ObjectId
+  user    User   @relation(fields: [userId], references: [id])
 
-  purchases     PurchaseItem[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  purchases PurchaseItem[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 }
-
-
 
 // ===================== PARTY =====================
 
 model Party {
-  id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  name       String
-  phone      String    @unique
-  address    String?
-  dob        DateTime?
-  
+  id      String    @id @default(auto()) @map("_id") @db.ObjectId
+  name    String
+  phone   String    @unique
+  address String?
+  dob     DateTime?
+
   // ✅ Store Clerk User ID of the creator
-  createdBy  String
-  user       User?     @relation(fields: [createdBy], references: [clerkId])
+  createdBy String
+  user      User?  @relation(fields: [createdBy], references: [clerkId])
 
   // ✅ Relation to bills (if this customer is billed)
-  bills      Bill[]
+  bills Bill[]
 
-  createdAt  DateTime  @default(now())
+  createdAt DateTime @default(now())
 }
-
 
 // ===================== PRODUCT =====================
 
@@ -125,11 +122,10 @@ model Bill {
   dueDate       DateTime?
 
   // 🔹 New optional fields for Hold feature
-  holdBy        String?       // clerkId of the user who held the bill
-  holdAt        DateTime?     // timestamp when bill was held
-  resumedAt     DateTime?
-  isHeld        Boolean @default(false)
-
+  holdBy    String? // clerkId of the user who held the bill
+  holdAt    DateTime? // timestamp when bill was held
+  resumedAt DateTime?
+  isHeld    Boolean   @default(false)
 
   // ✅ New company fields added
   companyName    String?
@@ -140,9 +136,9 @@ model Bill {
   signatureUrl   String?
   websiteUrl     String?
 
-  payments      Payment[]
-  history       BillHistory[]
-  createdAt     DateTime      @default(now())
+  payments  Payment[]
+  history   BillHistory[]
+  createdAt DateTime      @default(now())
 }
 
 // ===================== BILLPRODUCT =====================
@@ -221,6 +217,9 @@ model User {
   uploads   Upload[]
   purchases Purchase[]
   parties   Party[]
+
+  // 🔥 Add this for creator relation
+  profilesCreated BusinessProfile[] @relation("ProfileCreator")
 }
 
 // ===================== FORM =====================
@@ -252,10 +251,11 @@ model Field {
 
 // ===================== BUSINESS PROFILE =====================
 model BusinessProfile {
-  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  id                 String  @id @default(auto()) @map("_id") @db.ObjectId
   userId             String
-  user               User     @relation(fields: [userId], references: [clerkId])
-
+  user               User    @relation(fields: [userId], references: [clerkId])
+  createdBy          String
+  creator            User?   @relation("ProfileCreator", fields: [createdBy], references: [clerkId])
   businessType       String?
   businessName       String?
   businessTagLine    String?
@@ -269,13 +269,13 @@ model BusinessProfile {
   signatureUrl       String?
 
   // 🧾 Added fields for business details
-  gstNumber          String?
-  businessAddress    String?
-  state              String?
-  pinCode            String?
+  gstNumber       String?
+  businessAddress String?
+  state           String?
+  pinCode         String?
 
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ===================== UPLOAD =====================
