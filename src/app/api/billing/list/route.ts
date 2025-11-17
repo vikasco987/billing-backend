@@ -121,46 +121,122 @@
 
 
 
+// // src/app/api/billing/list/route.ts
+// import { prisma } from "@/lib/prisma";
+// import { currentUser } from "@clerk/nextjs/server";
+
+// export async function GET() {
+//   try {
+//     // 1️⃣ Get the logged-in Clerk user
+//     const clerkUser = await currentUser();
+//     if (!clerkUser) {
+//       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+//     }
+
+//     // 2️⃣ Find your app User by Clerk ID
+//     const appUser = await prisma.user.findUnique({
+//       where: { clerkId: clerkUser.id }, // ✅ correct mapping
+//     });
+
+//     if (!appUser) {
+//       return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
+//     }
+
+//     // 3️⃣ Fetch only bills created by this user
+//     const bills = await prisma.bill.findMany({
+//       where: {
+//         userId: appUser.id, // ✅ use app User's Mongo ID
+//       },
+//       orderBy: { createdAt: "desc" },
+//       take: 200, // fetch latest 200 bills
+//       include: {
+//         customer: true, // customer details
+//         products: {
+//           include: { product: true }, // product details
+//         },
+//         payments: true, // payment history
+//       },
+//     });
+
+//     return new Response(JSON.stringify({ bills }), { status: 200 });
+//   } catch (err) {
+//     console.error("Failed to fetch bills:", err);
+//     return new Response(JSON.stringify({ error: "Failed to fetch bills" }), { status: 500 });
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // src/app/api/billing/list/route.ts
 import { prisma } from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
 
 export async function GET() {
   try {
-    // 1️⃣ Get the logged-in Clerk user
+    // 1️⃣ Get currently logged-in Clerk user
     const clerkUser = await currentUser();
     if (!clerkUser) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401 }
+      );
     }
 
-    // 2️⃣ Find your app User by Clerk ID
+    // 2️⃣ Match Clerk user to your internal User table
     const appUser = await prisma.user.findUnique({
-      where: { clerkId: clerkUser.id }, // ✅ correct mapping
+      where: { clerkId: clerkUser.id },
     });
 
     if (!appUser) {
-      return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
+      return new Response(
+        JSON.stringify({ error: "User not found" }),
+        { status: 404 }
+      );
     }
 
-    // 3️⃣ Fetch only bills created by this user
+    // 3️⃣ Get ONLY this user's bills (prevents showing another user’s data)
     const bills = await prisma.bill.findMany({
       where: {
-        userId: appUser.id, // ✅ use app User's Mongo ID
+        userId: appUser.id, // internal Mongo/SQL ID, not Clerk ID
       },
       orderBy: { createdAt: "desc" },
-      take: 200, // fetch latest 200 bills
       include: {
-        customer: true, // customer details
+        customer: true,
         products: {
-          include: { product: true }, // product details
+          include: { product: true },
         },
-        payments: true, // payment history
+        payments: true,
       },
     });
 
-    return new Response(JSON.stringify({ bills }), { status: 200 });
+    return new Response(
+      JSON.stringify({ bills }),
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      }
+    );
+
   } catch (err) {
-    console.error("Failed to fetch bills:", err);
-    return new Response(JSON.stringify({ error: "Failed to fetch bills" }), { status: 500 });
+    console.error("❌ Error fetching bills:", err);
+
+    return new Response(
+      JSON.stringify({ error: "Failed to fetch bills" }),
+      { status: 500 }
+    );
   }
 }
