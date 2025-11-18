@@ -108,6 +108,7 @@ model Product {
 model Bill {
   id            String        @id @default(auto()) @map("_id") @db.ObjectId
   userId        String        @db.ObjectId
+  clerkUserId   String?
   user          User          @relation(fields: [userId], references: [id])
   customerId    String?       @db.ObjectId
   customer      Party?        @relation(fields: [customerId], references: [id])
@@ -144,17 +145,17 @@ model Bill {
 // ===================== BILLPRODUCT =====================
 
 model BillProduct {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  billId    String   @db.ObjectId
-  productId String   @db.ObjectId
-  productName String 
-  bill      Bill     @relation(fields: [billId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  product   Product? @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  quantity  Int
-  price     Float
-  discount  Float?
-  gst       Float?
-  total     Float?
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  billId      String   @db.ObjectId
+  productId   String   @db.ObjectId
+  productName String?
+  bill        Bill     @relation(fields: [billId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  quantity    Int
+  price       Float
+  discount    Float?
+  gst         Float?
+  total       Float?
 }
 
 // ===================== BILL HISTORY =====================
