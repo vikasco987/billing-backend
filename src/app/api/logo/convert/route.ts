@@ -1,14 +1,22 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import fetch from "node-fetch";
 import { PNG } from "pngjs";
 import EscPosEncoder from "esc-pos-encoder";
 
-// GET /api/logo/convert?url=<logo_url>
 export async function GET(req: Request) {
   try {
+    // 🔥 AUTH CHECK HERE
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const url = searchParams.get("url");
-    if (!url) return NextResponse.json({ error: "Missing logo URL" }, { status: 400 });
+    if (!url) {
+      return NextResponse.json({ error: "Missing logo URL" }, { status: 400 });
+    }
 
     const response = await fetch(url);
     const arrayBuffer = await response.arrayBuffer();
@@ -17,17 +25,21 @@ export async function GET(req: Request) {
     // Decode PNG
     const png = PNG.sync.read(buffer);
 
-    // Convert to ESC/POS raster
+    // ESC/POS raster image
     const encoder = new EscPosEncoder();
     const escposData = encoder
       .initialize()
       .rasterBitImage(png.data, png.width, png.height, "d24")
       .encode();
 
-    // Return Base64
-    return NextResponse.json({ escposBase64: Buffer.from(escposData).toString("base64") });
+    return NextResponse.json({
+      escposBase64: Buffer.from(escposData).toString("base64"),
+    });
   } catch (err: any) {
     console.error("Logo conversion error:", err);
-    return NextResponse.json({ error: "Failed to convert logo", details: err.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to convert logo", details: err.message },
+      { status: 500 }
+    );
   }
 }
