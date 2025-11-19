@@ -48,23 +48,15 @@
 
 
 
-
-
-
-
-
-
-
-
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import fetch from "node-fetch";
 import { PNG } from "pngjs";
-import EscPosEncoder from "esc-pos-encoder";
+import EscPosEncoder from "escpos-encoder";
 
 export async function GET(req: Request) {
   try {
-    // 🔥 AUTH CHECK HERE — MUST AWAIT
+    // AUTH CHECK
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -80,19 +72,19 @@ export async function GET(req: Request) {
       );
     }
 
-    // Fetch remote logo
+    // Fetch remote logo file
     const response = await fetch(url);
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Decode PNG to RGBA
+    // Decode PNG to get pixel data
     const png = PNG.sync.read(buffer);
 
-    // Convert to ESC/POS raster format
+    // Convert image to ESC/POS (NEW library uses `.image()`)
     const encoder = new EscPosEncoder();
     const escposData = encoder
       .initialize()
-      .rasterBitImage(png.data, png.width, png.height, "d24")
+      .image(png.data, png.width, png.height, "d24") // <-- FIXED
       .encode();
 
     return NextResponse.json({
@@ -109,3 +101,9 @@ export async function GET(req: Request) {
     );
   }
 }
+
+
+
+
+
+
