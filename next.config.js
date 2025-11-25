@@ -1,16 +1,55 @@
+// /** @type {import('next').NextConfig} */
+// const nextConfig = {
+//   eslint: {
+//     ignoreDuringBuilds: true, // Keep your previous setting
+//   },
+//   images: {
+//     remotePatterns: [
+//       {
+//         protocol: "https",
+//         hostname: "res.cloudinary.com",
+//         port: "",
+//         pathname: "/**", // Allow all images from Cloudinary
+//       },
+//     ],
+//   },
+// };
+
+// export default nextConfig;
+
+
+
+
+
+
+
+
+
+
+
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    ignoreDuringBuilds: true, // Keep your previous setting
+    ignoreDuringBuilds: true,
   },
+
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "res.cloudinary.com",
         port: "",
-        pathname: "/**", // Allow all images from Cloudinary
+        pathname: "/**",
       },
+    ],
+  },
+
+  // *** REQUIRED FOR ESC/POS PACKAGES ***
+  experimental: {
+    serverComponentsExternalPackages: [
+      "escpos-encoder",
+      "pngjs"
     ],
   },
 };
