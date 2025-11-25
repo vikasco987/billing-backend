@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     }
 
     const deleted = await prisma.deleteHistory.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: { deletedAt: "desc" }, // FIXED
     });
 
     return NextResponse.json({ deleted });
