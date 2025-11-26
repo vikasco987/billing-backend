@@ -28,6 +28,46 @@
 
 
 
+// /** @type {import('next').NextConfig} */
+// const nextConfig = {
+//   eslint: {
+//     ignoreDuringBuilds: true,
+//   },
+
+//   images: {
+//     remotePatterns: [
+//       {
+//         protocol: "https",
+//         hostname: "res.cloudinary.com",
+//         port: "",
+//         pathname: "/**",
+//       },
+//     ],
+//   },
+
+//   // *** REQUIRED FOR ESC/POS PACKAGES ***
+//   experimental: {
+//     serverComponentsExternalPackages: [
+//       "escpos-encoder",
+//       "pngjs"
+//     ],
+//   },
+// };
+
+// export default nextConfig;
+
+
+
+
+
+
+
+
+
+
+
+
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -45,8 +85,11 @@ const nextConfig = {
     ],
   },
 
-  // *** REQUIRED FOR ESC/POS PACKAGES ***
   experimental: {
+    // 🚫 DISABLE Typed Route Types (THIS FIXES YOUR ERROR)
+    typedRoutes: false,
+
+    // your existing printer packages
     serverComponentsExternalPackages: [
       "escpos-encoder",
       "pngjs"
