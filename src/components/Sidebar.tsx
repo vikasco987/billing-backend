@@ -1451,570 +1451,6 @@
 
 
 
-// "use client";
-
-// import Link from "next/link";
-// import { useEffect, useState } from "react";
-// import {
-//   Menu,
-//   X,
-//   User,
-//   Edit3,
-//   Upload,
-//   Eye,
-//   Home,
-//   Settings,
-//   Users,
-//   FileText, // 👈 Added for "All Bills"
-// } from "lucide-react";
-// import ProfileForm from "@/components/profile/ProfileForm";
-// import { motion, AnimatePresence } from "framer-motion";
-
-// export default function Sidebar() {
-//   const [isOpen, setIsOpen] = useState(false);
-//   const [showProfile, setShowProfile] = useState(false);
-//   const [profile, setProfile] = useState<any>(null);
-//   const [isEditing, setIsEditing] = useState(false);
-
-//   // ✅ Fetch profile
-//   const fetchProfile = async () => {
-//     try {
-//       const res = await fetch("/api/profile/recent");
-//       if (res.ok) {
-//         const data = await res.json();
-//         setProfile(data || null);
-//       }
-//     } catch (err) {
-//       console.error("Failed to load profile", err);
-//     }
-//   };
-
-//   useEffect(() => {
-//     if (showProfile) fetchProfile();
-//   }, [showProfile]);
-
-//   return (
-//     <>
-//       {/* Top Navbar (Mobile) */}
-//       <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between bg-gradient-to-r from-purple-600 to-indigo-700 text-white p-4 shadow-lg">
-//         <h1 className="text-lg font-extrabold flex items-center gap-2">
-//           <Home size={22} className="text-yellow-300" /> MyApp
-//         </h1>
-//         <button
-//           onClick={() => setIsOpen(!isOpen)}
-//           className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition"
-//         >
-//           {isOpen ? <X size={24} /> : <Menu size={24} />}
-//         </button>
-//       </header>
-
-//       {/* Sidebar */}
-//       <aside
-//         className={`fixed md:static top-0 left-0 h-full w-64 md:w-72 bg-gradient-to-b from-gray-900 to-gray-800 text-white transform 
-//         ${isOpen ? "translate-x-0" : "-translate-x-full"} 
-//         md:translate-x-0 transition-transform duration-300 ease-in-out z-40 shadow-2xl`}
-//       >
-//         <div className="p-4 text-xl font-extrabold border-b border-gray-700 hidden md:block">
-//           📂 Dashboard
-//         </div>
-
-//         <nav className="flex-1 p-4 space-y-3 mt-12 md:mt-0">
-//           {/* Home */}
-//           <Link
-//             href="/"
-//             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
-//             onClick={() => setIsOpen(false)}
-//           >
-//             <Home size={20} /> Home
-//           </Link>
-
-//           {/* Upload Menu */}
-//           <Link
-//             href="/menu/upload"
-//             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
-//             onClick={() => setIsOpen(false)}
-//           >
-//             <Upload size={20} /> Upload Menu
-//           </Link>
-
-//           {/* View Menu */}
-//           <Link
-//             href="/menu/view"
-//             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
-//             onClick={() => setIsOpen(false)}
-//           >
-//             <Eye size={20} /> View Menu
-//           </Link>
-
-//           {/* Party Management */}
-//           <Link
-//             href="/parties"
-//             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
-//             onClick={() => setIsOpen(false)}
-//           >
-//             <Users size={20} /> Party Management
-//           </Link>
-
-//           {/* ✅ View All Bills */}
-//           <Link
-//             href="/billing/allbill"
-//             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
-//             onClick={() => setIsOpen(false)}
-//           >
-//             <FileText size={20} /> View All Bills
-//           </Link>
-
-//           {/* My Business Profile */}
-//           <button
-//             onClick={() => {
-//               setShowProfile(true);
-//               setIsEditing(false);
-//             }}
-//             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 transition font-medium shadow-md"
-//           >
-//             <User size={20} /> My Business Profile
-//           </button>
-//         </nav>
-//       </aside>
-
-//       {/* Mobile Overlay */}
-//       {isOpen && (
-//         <div
-//           className="fixed inset-0 bg-black/50 backdrop-blur-sm md:hidden z-30"
-//           onClick={() => setIsOpen(false)}
-//         />
-//       )}
-
-//       {/* Profile Drawer */}
-//       <AnimatePresence>
-//         {showProfile && (
-//           <>
-//             <motion.div
-//               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-//               initial={{ opacity: 0 }}
-//               animate={{ opacity: 1 }}
-//               exit={{ opacity: 0 }}
-//               onClick={() => setShowProfile(false)}
-//             />
-
-//             <motion.div
-//               className="fixed right-0 top-0 h-full w-full md:w-[600px] bg-gradient-to-b from-white to-gray-50 shadow-2xl z-50 flex flex-col"
-//               initial={{ x: "100%" }}
-//               animate={{ x: 0 }}
-//               exit={{ x: "100%" }}
-//               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-//             >
-//               {/* Header */}
-//               <div className="flex items-center justify-between p-4 border-b bg-indigo-600 text-white sticky top-0 z-10">
-//                 <h2 className="text-lg font-bold flex items-center gap-2">
-//                   <User size={20} /> My Business Profile
-//                 </h2>
-//                 <button
-//                   onClick={() => setShowProfile(false)}
-//                   className="p-1 rounded-full hover:bg-white/20"
-//                 >
-//                   <X size={24} />
-//                 </button>
-//               </div>
-
-//               {/* Content */}
-//               <div className="flex-1 p-6 overflow-y-auto pb-24">
-//                 {profile && !isEditing ? (
-//                   <motion.div
-//                     initial={{ opacity: 0, y: 20 }}
-//                     animate={{ opacity: 1, y: 0 }}
-//                     className="bg-white shadow-lg rounded-2xl p-6 space-y-4 border"
-//                   >
-//                     {profile.logoUrl && (
-//                       <img
-//                         src={profile.logoUrl}
-//                         alt="Logo"
-//                         className="w-24 h-24 object-contain rounded-full mx-auto border-4 border-indigo-200 shadow"
-//                       />
-//                     )}
-
-//                     <h3 className="text-2xl font-bold text-center text-indigo-700">
-//                       {profile.businessName}
-//                     </h3>
-//                     <p className="text-center text-gray-500 italic">
-//                       {profile.businessTagLine}
-//                     </p>
-
-//                     <div className="space-y-3 text-gray-700 text-sm">
-//                       <p>📌 <strong>Type:</strong> {profile.businessType}</p>
-//                       <p>👤 <strong>Contact:</strong> {profile.contactPersonName}</p>
-//                       <p>📞 <strong>Phone:</strong> {profile.contactPersonPhone}</p>
-//                       <p>✉️ <strong>Email:</strong> {profile.contactPersonEmail}</p>
-//                       <p>💳 <strong>UPI:</strong> {profile.upi}</p>
-//                       <p>⭐ <strong>Reviews:</strong> {profile.googleReviewUrl}</p>
-//                       <p>📝 <strong>Custom:</strong> {profile.customField}</p>
-//                     </div>
-
-//                     {profile.profileImageUrl && (
-//                       <img
-//                         src={profile.profileImageUrl}
-//                         alt="Profile Image"
-//                         className="w-32 h-32 object-cover rounded-full mx-auto mt-4 border-4 border-gray-200 shadow"
-//                       />
-//                     )}
-
-//                     {profile.signatureUrl && (
-//                       <div className="text-center mt-4">
-//                         <p className="font-medium text-gray-600">Signature</p>
-//                         <img
-//                           src={profile.signatureUrl}
-//                           alt="Signature"
-//                           className="w-40 h-20 object-contain mx-auto"
-//                         />
-//                       </div>
-//                     )}
-
-//                     <button
-//                       onClick={() => setIsEditing(true)}
-//                       className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 mt-4 shadow-md"
-//                     >
-//                       <Edit3 size={18} /> Edit Profile
-//                     </button>
-//                   </motion.div>
-//                 ) : (
-//                   <ProfileForm
-//                     initialData={isEditing ? profile : null}
-//                     onSuccess={() => {
-//                       setIsEditing(false);
-//                       fetchProfile();
-//                     }}
-//                   />
-//                 )}
-//               </div>
-//             </motion.div>
-//           </>
-//         )}
-//       </AnimatePresence>
-
-//       {/* Bottom Navigation (Mobile) */}
-//       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg flex justify-around py-2 z-50">
-//         <Link href="/" className="flex flex-col items-center text-gray-600 hover:text-indigo-600">
-//           <Home size={22} /> <span className="text-xs">Home</span>
-//         </Link>
-//         <Link href="/menu/upload" className="flex flex-col items-center text-gray-600 hover:text-indigo-600">
-//           <Upload size={22} /> <span className="text-xs">Upload</span>
-//         </Link>
-//         <Link href="/menu/view" className="flex flex-col items-center text-gray-600 hover:text-indigo-600">
-//           <Eye size={22} /> <span className="text-xs">View</span>
-//         </Link>
-//         <Link href="/billing/allbill" className="flex flex-col items-center text-gray-600 hover:text-indigo-600">
-//           <FileText size={22} /> <span className="text-xs">Bills</span>
-//         </Link>
-//         <button
-//           onClick={() => setShowProfile(true)}
-//           className="flex flex-col items-center text-gray-600 hover:text-indigo-600"
-//         >
-//           <User size={22} /> <span className="text-xs">Profile</span>
-//         </button>
-//       </div>
-//     </>
-//   );
-// }
-
-
-
-
-
-
-
-
-
-
-// "use client";
-
-// import Link from "next/link";
-// import { useEffect, useState } from "react";
-// import {
-//   Menu,
-//   X,
-//   User,
-//   Edit3,
-//   Upload,
-//   Eye,
-//   Home,
-//   Users,
-//   FileText,
-//   Trash2,
-// } from "lucide-react";
-// import ProfileForm from "@/components/profile/ProfileForm";
-// import { motion, AnimatePresence } from "framer-motion";
-
-// export default function Sidebar() {
-//   const [isOpen, setIsOpen] = useState(false);
-//   const [showProfile, setShowProfile] = useState(false);
-//   const [profile, setProfile] = useState<any>(null);
-//   const [isEditing, setIsEditing] = useState(false);
-
-//   // Fetch profile
-//   const fetchProfile = async () => {
-//     try {
-//       const res = await fetch("/api/profile/recent");
-//       if (res.ok) {
-//         const data = await res.json();
-//         setProfile(data || null);
-//       }
-//     } catch (err) {
-//       console.error("Failed to load profile", err);
-//     }
-//   };
-
-//   useEffect(() => {
-//     if (showProfile) fetchProfile();
-//   }, [showProfile]);
-
-//   // ✅ DELETE PROFILE FUNCTION
-//   const handleDeleteProfile = async () => {
-//     const confirmDelete = confirm("⚠ Are you sure you want to delete your business profile?");
-//     if (!confirmDelete) return;
-
-//     try {
-//       const res = await fetch("/api/profile/delete", {
-//         method: "DELETE",
-//       });
-
-//       if (res.ok) {
-//         alert("Profile deleted successfully!");
-//         setProfile(null);
-//         setShowProfile(false);
-//       } else {
-//         alert("Delete failed.");
-//       }
-//     } catch (err) {
-//       console.error("Delete error:", err);
-//       alert("Something went wrong.");
-//     }
-//   };
-
-//   return (
-//     <>
-//       {/* Top Navbar (Mobile) */}
-//       <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between bg-gradient-to-r from-purple-600 to-indigo-700 text-white p-4 shadow-lg">
-//         <h1 className="text-lg font-extrabold flex items-center gap-2">
-//           <Home size={22} className="text-yellow-300" /> MyApp
-//         </h1>
-//         <button
-//           onClick={() => setIsOpen(!isOpen)}
-//           className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition"
-//         >
-//           {isOpen ? <X size={24} /> : <Menu size={24} />}
-//         </button>
-//       </header>
-
-//       {/* Sidebar */}
-//       <aside
-//         className={`fixed md:static top-0 left-0 h-full w-64 md:w-72 bg-gradient-to-b from-gray-900 to-gray-800 text-white transform 
-//         ${isOpen ? "translate-x-0" : "-translate-x-full"} 
-//         md:translate-x-0 transition-transform duration-300 ease-in-out z-40 shadow-2xl`}
-//       >
-//         <div className="p-4 text-xl font-extrabold border-b border-gray-700 hidden md:block">
-//           📂 Dashboard
-//         </div>
-
-//         <nav className="flex-1 p-4 space-y-3 mt-12 md:mt-0">
-//           <Link
-//             href="/"
-//             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
-//             onClick={() => setIsOpen(false)}
-//           >
-//             <Home size={20} /> Home
-//           </Link>
-
-//           <Link
-//             href="/menu/upload"
-//             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
-//             onClick={() => setIsOpen(false)}
-//           >
-//             <Upload size={20} /> Upload Menu
-//           </Link>
-
-//           <Link
-//             href="/menu/view"
-//             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
-//             onClick={() => setIsOpen(false)}
-//           >
-//             <Eye size={20} /> View Menu
-//           </Link>
-
-//           <Link
-//             href="/parties"
-//             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
-//             onClick={() => setIsOpen(false)}
-//           >
-//             <Users size={20} /> Party Management
-//           </Link>
-
-//           <Link
-//             href="/billing/allbill"
-//             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
-//             onClick={() => setIsOpen(false)}
-//           >
-//             <FileText size={20} /> View All Bills
-//           </Link>
-
-//           <button
-//             onClick={() => {
-//               setShowProfile(true);
-//               setIsEditing(false);
-//             }}
-//             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 transition font-medium shadow-md"
-//           >
-//             <User size={20} /> My Business Profile
-//           </button>
-//         </nav>
-//       </aside>
-
-//       {/* Mobile Overlay */}
-//       {isOpen && (
-//         <div
-//           className="fixed inset-0 bg-black/50 backdrop-blur-sm md:hidden z-30"
-//           onClick={() => setIsOpen(false)}
-//         />
-//       )}
-
-//       {/* Profile Drawer */}
-//       <AnimatePresence>
-//         {showProfile && (
-//           <>
-//             <motion.div
-//               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-//               initial={{ opacity: 0 }}
-//               animate={{ opacity: 1 }}
-//               exit={{ opacity: 0 }}
-//               onClick={() => setShowProfile(false)}
-//             />
-
-//             <motion.div
-//               className="fixed right-0 top-0 h-full w-full md:w-[600px] bg-gradient-to-b from-white to-gray-50 shadow-2xl z-50 flex flex-col"
-//               initial={{ x: "100%" }}
-//               animate={{ x: 0 }}
-//               exit={{ x: "100%" }}
-//               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-//             >
-//               {/* Header */}
-//               <div className="flex items-center justify-between p-4 border-b bg-indigo-600 text-white sticky top-0 z-10">
-//                 <h2 className="text-lg font-bold flex items-center gap-2">
-//                   <User size={20} /> My Business Profile
-//                 </h2>
-//                 <button
-//                   onClick={() => setShowProfile(false)}
-//                   className="p-1 rounded-full hover:bg-white/20"
-//                 >
-//                   <X size={24} />
-//                 </button>
-//               </div>
-
-//               {/* Content */}
-//               <div className="flex-1 p-6 overflow-y-auto pb-24">
-//                 {profile && !isEditing ? (
-//                   <motion.div
-//                     initial={{ opacity: 0, y: 20 }}
-//                     animate={{ opacity: 1, y: 0 }}
-//                     className="bg-white shadow-lg rounded-2xl p-6 space-y-4 border"
-//                   >
-//                     {profile.logoUrl && (
-//                       <img
-//                         src={profile.logoUrl}
-//                         alt="Logo"
-//                         className="w-24 h-24 object-contain rounded-full mx-auto border-4 border-indigo-200 shadow"
-//                       />
-//                     )}
-
-//                     <h3 className="text-2xl font-bold text-center text-indigo-700">
-//                       {profile.businessName}
-//                     </h3>
-//                     <p className="text-center text-gray-500 italic">
-//                       {profile.businessTagLine}
-//                     </p>
-
-//                     <div className="space-y-3 text-gray-700 text-sm">
-//                       <p>📌 <strong>Type:</strong> {profile.businessType}</p>
-//                       <p>👤 <strong>Contact:</strong> {profile.contactPersonName}</p>
-//                       <p>📞 <strong>Phone:</strong> {profile.contactPersonPhone}</p>
-//                       <p>✉️ <strong>Email:</strong> {profile.contactPersonEmail}</p>
-//                       <p>💳 <strong>UPI:</strong> {profile.upi}</p>
-//                       <p>⭐ <strong>Reviews:</strong> {profile.googleReviewUrl}</p>
-//                       <p>📝 <strong>Custom:</strong> {profile.customField}</p>
-//                     </div>
-
-//                     {/* Edit Button */}
-//                     <button
-//                       onClick={() => setIsEditing(true)}
-//                       className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-md"
-//                     >
-//                       <Edit3 size={18} /> Edit Profile
-//                     </button>
-
-//                     {/* DELETE BUTTON */}
-//                     <button
-//                       onClick={handleDeleteProfile}
-//                       className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-md mt-3"
-//                     >
-//                       <Trash2 size={18} /> Delete Profile
-//                     </button>
-//                   </motion.div>
-//                 ) : (
-//                   <ProfileForm
-//                     initialData={isEditing ? profile : null}
-//                     onSuccess={() => {
-//                       setIsEditing(false);
-//                       fetchProfile();
-//                     }}
-//                   />
-//                 )}
-//               </div>
-//             </motion.div>
-//           </>
-//         )}
-//       </AnimatePresence>
-
-//       {/* Bottom Navigation */}
-//       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg flex justify-around py-2 z-50">
-//         <Link href="/" className="flex flex-col items-center text-gray-600 hover:text-indigo-600">
-//           <Home size={22} /> <span className="text-xs">Home</span>
-//         </Link>
-//         <Link href="/menu/upload" className="flex flex-col items-center text-gray-600 hover:text-indigo-600">
-//           <Upload size={22} /> <span className="text-xs">Upload</span>
-//         </Link>
-//         <Link href="/menu/view" className="flex flex-col items-center text-gray-600 hover:text-indigo-600">
-//           <Eye size={22} /> <span className="text-xs">View</span>
-//         </Link>
-//         <Link href="/billing/allbill" className="flex flex-col items-center text-gray-600 hover:text-indigo-600">
-//           <FileText size={22} /> <span className="text-xs">Bills</span>
-//         </Link>
-//         <button
-//           onClick={() => setShowProfile(true)}
-//           className="flex flex-col items-center text-gray-600 hover:text-indigo-600"
-//         >
-//           <User size={22} /> <span className="text-xs">Profile</span>
-//         </button>
-//       </div>
-//     </>
-//   );
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 "use client";
 
 import Link from "next/link";
@@ -2027,9 +1463,9 @@ import {
   Upload,
   Eye,
   Home,
+  Settings,
   Users,
-  FileText,
-  Trash2,
+  FileText, // 👈 Added for "All Bills"
 } from "lucide-react";
 import ProfileForm from "@/components/profile/ProfileForm";
 import { motion, AnimatePresence } from "framer-motion";
@@ -2040,7 +1476,7 @@ export default function Sidebar() {
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Fetch profile
+  // ✅ Fetch profile
   const fetchProfile = async () => {
     try {
       const res = await fetch("/api/profile/recent");
@@ -2056,31 +1492,6 @@ export default function Sidebar() {
   useEffect(() => {
     if (showProfile) fetchProfile();
   }, [showProfile]);
-
-  // ✅ DELETE PROFILE FUNCTION
-  const handleDeleteProfile = async () => {
-    const confirmDelete = confirm(
-      "⚠ Are you sure you want to delete your business profile?"
-    );
-    if (!confirmDelete) return;
-
-    try {
-      const res = await fetch("/api/profile/delete", {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        alert("Profile deleted successfully!");
-        setProfile(null);
-        setShowProfile(false);
-      } else {
-        alert("Delete failed.");
-      }
-    } catch (err) {
-      console.error("Delete error:", err);
-      alert("Something went wrong.");
-    }
-  };
 
   return (
     <>
@@ -2108,6 +1519,7 @@ export default function Sidebar() {
         </div>
 
         <nav className="flex-1 p-4 space-y-3 mt-12 md:mt-0">
+          {/* Home */}
           <Link
             href="/"
             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
@@ -2116,6 +1528,7 @@ export default function Sidebar() {
             <Home size={20} /> Home
           </Link>
 
+          {/* Upload Menu */}
           <Link
             href="/menu/upload"
             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
@@ -2124,6 +1537,7 @@ export default function Sidebar() {
             <Upload size={20} /> Upload Menu
           </Link>
 
+          {/* View Menu */}
           <Link
             href="/menu/view"
             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
@@ -2132,6 +1546,7 @@ export default function Sidebar() {
             <Eye size={20} /> View Menu
           </Link>
 
+          {/* Party Management */}
           <Link
             href="/parties"
             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
@@ -2140,6 +1555,7 @@ export default function Sidebar() {
             <Users size={20} /> Party Management
           </Link>
 
+          {/* ✅ View All Bills */}
           <Link
             href="/billing/allbill"
             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-indigo-600 transition"
@@ -2148,6 +1564,7 @@ export default function Sidebar() {
             <FileText size={20} /> View All Bills
           </Link>
 
+          {/* My Business Profile */}
           <button
             onClick={() => {
               setShowProfile(true);
@@ -2233,20 +1650,30 @@ export default function Sidebar() {
                       <p>📝 <strong>Custom:</strong> {profile.customField}</p>
                     </div>
 
-                    {/* Edit Button */}
+                    {profile.profileImageUrl && (
+                      <img
+                        src={profile.profileImageUrl}
+                        alt="Profile Image"
+                        className="w-32 h-32 object-cover rounded-full mx-auto mt-4 border-4 border-gray-200 shadow"
+                      />
+                    )}
+
+                    {profile.signatureUrl && (
+                      <div className="text-center mt-4">
+                        <p className="font-medium text-gray-600">Signature</p>
+                        <img
+                          src={profile.signatureUrl}
+                          alt="Signature"
+                          className="w-40 h-20 object-contain mx-auto"
+                        />
+                      </div>
+                    )}
+
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-md"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 mt-4 shadow-md"
                     >
                       <Edit3 size={18} /> Edit Profile
-                    </button>
-
-                    {/* DELETE BUTTON */}
-                    <button
-                      onClick={handleDeleteProfile}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-md mt-3"
-                    >
-                      <Trash2 size={18} /> Delete Profile
                     </button>
                   </motion.div>
                 ) : (
@@ -2264,30 +1691,18 @@ export default function Sidebar() {
         )}
       </AnimatePresence>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation (Mobile) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg flex justify-around py-2 z-50">
-        <Link
-          href="/"
-          className="flex flex-col items-center text-gray-600 hover:text-indigo-600"
-        >
+        <Link href="/" className="flex flex-col items-center text-gray-600 hover:text-indigo-600">
           <Home size={22} /> <span className="text-xs">Home</span>
         </Link>
-        <Link
-          href="/menu/upload"
-          className="flex flex-col items-center text-gray-600 hover:text-indigo-600"
-        >
+        <Link href="/menu/upload" className="flex flex-col items-center text-gray-600 hover:text-indigo-600">
           <Upload size={22} /> <span className="text-xs">Upload</span>
         </Link>
-        <Link
-          href="/menu/view"
-          className="flex flex-col items-center text-gray-600 hover:text-indigo-600"
-        >
+        <Link href="/menu/view" className="flex flex-col items-center text-gray-600 hover:text-indigo-600">
           <Eye size={22} /> <span className="text-xs">View</span>
         </Link>
-        <Link
-          href="/billing/allbill"
-          className="flex flex-col items-center text-gray-600 hover:text-indigo-600"
-        >
+        <Link href="/billing/allbill" className="flex flex-col items-center text-gray-600 hover:text-indigo-600">
           <FileText size={22} /> <span className="text-xs">Bills</span>
         </Link>
         <button
